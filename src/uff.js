@@ -1,13 +1,11 @@
 /* jshint esversion: 6 */
-/* eslint "indent": [ "error", 4, { "SwitchCase": 1 } ] */
 
 // Experimental
 
 var uff = uff || {};
 var base = base || require('./base');
 var long = long || { Long: require('long') };
-var protobuf = protobuf || require('protobufjs');
-var prototxt = prototxt || require('protobufjs/ext/prototxt');
+var protobuf = protobuf || require('./protobuf');
 
 uff.ModelFactory = class {
 
@@ -41,8 +39,8 @@ uff.ModelFactory = class {
             const extension = identifier.split('.').pop().toLowerCase();
             if (extension === 'pbtxt' || identifier.toLowerCase().endsWith('.uff.txt')) {
                 try {
-                    uff.proto = protobuf.roots.uff.uff;
-                    const reader = prototxt.TextReader.create(context.text);
+                    uff.proto = protobuf.get('uff').uff;
+                    const reader = protobuf.TextReader.create(context.text);
                     meta_graph = uff.proto.MetaGraph.decodeText(reader);
                 }
                 catch (error) {
@@ -51,8 +49,9 @@ uff.ModelFactory = class {
             }
             else {
                 try {
-                    uff.proto = protobuf.roots.uff.uff;
-                    meta_graph = uff.proto.MetaGraph.decode(context.buffer);
+                    uff.proto = protobuf.get('uff').uff;
+                    const reader = protobuf.Reader.create(context.buffer);
+                    meta_graph = uff.proto.MetaGraph.decode(reader);
                 }
                 catch (error) {
                     throw  new uff.Error("File format is not uff.MetaGraph (" + error.message + ") in '" + identifier + "'.");
@@ -289,17 +288,23 @@ uff.Attribute = class {
     constructor(metadata, name, value) {
         this._name = name;
         switch(value.type) {
-            case 's':  this._value = value.s; break;
-            case 'd':  this._value = value.d; break;
-            case 'd_list':  this._value = value.d_list.val; break;
-            case 'i':  this._value = value.i; break;
-            case 'i_list':  this._value = value.i_list.val; break;
-            case 'b':  this._value = value.b; break;
+            case 's':  this._value = value.s; this._type = 'string'; break;
+            case 's_list':  this._value = value.s_list; this._type = 'string[]'; break;
+            case 'd':  this._value = value.d; this._type = 'float64'; break;
+            case 'd_list':  this._value = value.d_list.val; this._type = 'float64[]'; break;
+            case 'i':  this._value = value.i; this._type = 'int64'; break;
+            case 'i_list':  this._value = value.i_list.val; this._type = 'int64[]'; break;
+            case 'b':  this._value = value.b; this._type = 'boolean'; break;
+            case 'b_list': this._value = value.b_list; this._type = 'boolean[]'; break;
             case 'blob': this._value = value.blob; break;
             case 'dtype': this._value = new uff.TensorType(value, null).dataType; break;
             case 'dim_orders_list': this._value = value.dim_orders_list.val; break;
-            default: throw new uff.Error("Unknown attribute format '" + JSON.stringify(value.type) + "'.");
+            default: throw new uff.Error("Unknown attribute '" + name + "'format '" + JSON.stringify(value) + "'.");
         }
+    }
+
+    get type() {
+        return this._type;
     }
 
     get name() {

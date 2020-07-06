@@ -1,13 +1,11 @@
 /* jshint esversion: 6 */
-/* eslint "indent": [ "error", 4, { "SwitchCase": 1 } ] */
 
 var view = view || {};
 
 var zip = zip || require('./zip');
 var gzip = gzip || require('./gzip');
 var tar = tar || require('./tar');
-var protobuf = protobuf || require('protobufjs');
-var prototxt = prototxt || require('protobufjs/ext/prototxt');
+var protobuf = protobuf || require('./protobuf');
 
 var d3 = d3 || require('d3');
 var dagre = dagre || require('dagre');
@@ -27,6 +25,7 @@ view.View = class {
             this._showAttributes = false;
             this._showInitializers = true;
             this._showNames = false;
+            this._showHorizontal = false;
             this._searchText = '';
             this._modelFactoryService = new view.ModelFactoryService(this._host);
             this._host.document.getElementById('zoom-in-button').addEventListener('click', () => {
@@ -138,6 +137,15 @@ view.View = class {
 
     get showNames() {
         return this._showNames;
+    }
+
+    toggleDirection() {
+        this._showHorizontal = !this._showHorizontal;
+        this._reload();
+    }
+
+    get showHorizontal() {
+        return this._showHorizontal;
     }
 
     _reload() {
@@ -382,6 +390,9 @@ view.View = class {
                 const graphOptions = {};
                 graphOptions.nodesep = 25;
                 graphOptions.ranksep = 20;
+                if (this._showHorizontal) {
+                    graphOptions.rankdir = "LR";
+                }
 
                 const g = new dagre.graphlib.Graph({ compound: groups });
                 g.setGraph(graphOptions);
@@ -676,7 +687,7 @@ view.View = class {
                     if (tuple.from != null) {
                         for (const to of tuple.to) {
                             let text = '';
-                            let type = tuple.from.type;
+                            const type = tuple.from.type;
                             if (type && type.shape && type.shape.dimensions && type.shape.dimensions.length > 0) {
                                 text = type.shape.dimensions.join('\u00D7');
                             }
@@ -771,11 +782,13 @@ view.View = class {
                                     ys.push(inputTransform.f);
                                 }
                                 let x = xs[0];
-                                let y = ys[0];
+                                const y = ys[0];
                                 if (ys.every(y => y == ys[0])) {
                                     x = xs.reduce((a,b) => { return a + b; }) / xs.length;
                                 }
-                                this._zoom.transform(svg, d3.zoomIdentity.translate((svgSize.width / 2) - x, (svgSize.height / 4) - y));
+                                const sx = (svgSize.width / (this._showHorizontal ? 4 : 2)) - x;
+                                const sy = (svgSize.height / (this._showHorizontal ? 2 : 4)) - y;
+                                this._zoom.transform(svg, d3.zoomIdentity.translate(sx, sy));
                             }
                             else {
                                 this._zoom.transform(svg, d3.zoomIdentity.translate((svgSize.width - g.graph().width) / 2, (svgSize.height - g.graph().height) / 2));
@@ -917,7 +930,7 @@ view.View = class {
                                 [ 'qint8', 'i1' ], [ 'qint16', 'i2' ],
                                 [ 'quint8', 'u1' ], [ 'quint16', 'u2' ]
                             ]);
-                            let array = new numpy.Array();
+                            const array = new numpy.Array();
                             array.shape = tensor.type.shape.dimensions;
                             array.data = tensor.value;
                             array.dataType = dataTypeMap.has(tensor.type.dataType) ? dataTypeMap.get(tensor.type.dataType) : tensor.type.dataType;
@@ -1045,7 +1058,7 @@ class ModelContext {
                         if (!signature && b.subarray(0, Math.min(1024, length)).some((c) => c < 7 || (c > 14 && c < 32))) {
                             break;
                         }
-                        const reader = prototxt.TextReader.create(this.text);
+                        const reader = protobuf.TextReader.create(this.text);
                         reader.start(false);
                         while (!reader.end(false)) {
                             const tag = reader.tag();
@@ -1055,10 +1068,16 @@ class ModelContext {
                         break;
                     }
                     case 'pb': {
-                        const reader = new protobuf.Reader.create(this.buffer);
-                        while (reader.pos < reader.len) {
+                        const tagTypes = new Set([ 0, 1, 2, 3, 5 ]);
+                        const reader = protobuf.Reader.create(this.buffer);
+                        const end = reader.next();
+                        while (reader.pos < end) {
                             const tagType = reader.uint32();
                             tags.set(tagType >>> 3, tagType & 7);
+                            if (!tagTypes.has(tagType & 7)) {
+                                tags = new Map();
+                                break;
+                            }
                             try {
                                 reader.skipType(tagType & 7);
                             }
@@ -1293,7 +1312,7 @@ view.ModelFactoryService = class {
         }
 
         try {
-            let folders = {};
+            const folders = {};
             for (const entry of archive.entries) {
                 if (entry.name.indexOf('/') != -1) {
                     folders[entry.name.split('/').shift() + '/'] = true;
@@ -1308,7 +1327,7 @@ view.ModelFactoryService = class {
             let rootFolder = Object.keys(folders).length == 1 ? Object.keys(folders)[0] : '';
             rootFolder = rootFolder == '/' ? '' : rootFolder;
             let matches = [];
-            let entries = archive.entries.slice();
+            const entries = archive.entries.slice();
             const nextEntry = () => {
                 if (entries.length > 0) {
                     const entry = entries.shift();

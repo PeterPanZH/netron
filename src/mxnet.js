@@ -1,5 +1,4 @@
 /* jshint esversion: 6 */
-/* eslint "indent": [ "error", 4, { "SwitchCase": 1 } ] */
 
 var mxnet = mxnet || {};
 var long = long || { Long: require('long') };
@@ -675,7 +674,7 @@ mxnet.Node = class {
                 for (const inputDef of schema.inputs) {
                     if (inputIndex < inputs.length || inputDef.option != 'optional') {
                         const inputCount = (inputDef.option == 'variadic') ? (inputs.length - inputIndex) : 1;
-                        let inputArguments = [];
+                        const inputArguments = [];
                         for (const input of inputs.slice(inputIndex, inputIndex + inputCount)) {
                             const inputId = '[' + input.join(',') + ']';
                             if (inputId != '' || inputDef.option != 'optional') {

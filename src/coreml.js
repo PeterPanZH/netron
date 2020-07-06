@@ -1,10 +1,9 @@
 /* jshint esversion: 6 */
-/* eslint "indent": [ "error", 4, { "SwitchCase": 1 } ] */
 
 var coreml = coreml || {};
 var base = base || require('./base');
 var long = long || { Long: require('long') };
-var protobuf = protobuf || require('protobufjs');
+var protobuf = protobuf || require('./protobuf');
 
 coreml.ModelFactory = class {
 
@@ -18,8 +17,9 @@ coreml.ModelFactory = class {
             const identifier = context.identifier;
             let decodedBuffer = null;
             try {
-                coreml.proto = protobuf.roots.coreml.CoreML.Specification;
-                decodedBuffer = coreml.proto.Model.decode(context.buffer);
+                coreml.proto = protobuf.get('coreml').CoreML.Specification;
+                const reader = protobuf.Reader.create(context.buffer);
+                decodedBuffer = coreml.proto.Model.decode(reader);
             }
             catch (error) {
                 throw new coreml.Error("File format is not coreml.Model (" + error.message + ") in '" + identifier + "'.");
@@ -1172,16 +1172,16 @@ coreml.Metadata = class {
     }
 
     getInputs(type, inputs) {
-        let results = [];
+        const results = [];
         const schema = this._map[type];
         let index = 0;
         while (index < inputs.length) {
-            let result = { arguments: [] };
+            const result = { arguments: [] };
             let count = 1;
             let name = null;
             if (schema && schema.inputs) {
                 if (index < schema.inputs.length) {
-                    let input = schema.inputs[index];
+                    const input = schema.inputs[index];
                     name = input.name;
                     if (schema.inputs[index].option == 'variadic') {
                         count = inputs.length - index;
@@ -1194,7 +1194,7 @@ coreml.Metadata = class {
                 }
             }
             result.name = name ? name : '(' + index.toString() + ')';
-            let array = inputs.slice(index, index + count);
+            const array = inputs.slice(index, index + count);
             for (let j = 0; j < array.length; j++) {
                 result.arguments.push({ name: array[j] });
             }
@@ -1207,11 +1207,11 @@ coreml.Metadata = class {
     getOutputName(type, index) {
         const schema = this._map[type];
         if (schema) {
-            let outputs = schema.outputs;
+            const outputs = schema.outputs;
             if (outputs && index < outputs.length) {
-                let output = outputs[index];
+                const output = outputs[index];
                 if (output) {
-                    let name = output.name;
+                    const name = output.name;
                     if (name) {
                         return name;
                     }

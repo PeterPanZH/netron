@@ -1,5 +1,4 @@
 /* jshint esversion: 6 */
-/* eslint "indent": [ "error", 4, { "SwitchCase": 1 } ] */
 
 var pickle = pickle || {};
 
@@ -10,10 +9,10 @@ pickle.Unpickler = class {
     }
 
     load(function_call, persistent_load) {
-        let reader = this._reader;
-        let marker = [];
+        const reader = this._reader;
+        const marker = [];
         let stack = [];
-        let memo = new Map();
+        const memo = new Map();
         while (reader.position < reader.length) {
             const opcode = reader.byte();
             switch (opcode) {
@@ -134,7 +133,7 @@ pickle.Unpickler = class {
                 case pickle.OpCode.ADDITEMS: {
                     const items = stack;
                     stack = marker.pop();
-                    let obj = stack[stack.length - 1];
+                    const obj = stack[stack.length - 1];
                     for (let i = 0; i < items.length; i++) {
                         obj.push(items[i]);
                     }
@@ -143,7 +142,7 @@ pickle.Unpickler = class {
                 case pickle.OpCode.DICT: {
                     const items = stack;
                     stack = marker.pop();
-                    let dict = {};
+                    const dict = {};
                     for (let i = 0; i < items.length; i += 2) {
                         dict[items[i]] = items[i + 1];
                     }
@@ -165,7 +164,7 @@ pickle.Unpickler = class {
                 case pickle.OpCode.SETITEM: {
                     const value = stack.pop();
                     const key = stack.pop();
-                    let obj = stack[stack.length - 1];
+                    const obj = stack[stack.length - 1];
                     if (obj.__setitem__) {
                         obj.__setitem__(key, value);
                     }
@@ -177,7 +176,7 @@ pickle.Unpickler = class {
                 case pickle.OpCode.SETITEMS: {
                     const items = stack;
                     stack = marker.pop();
-                    let obj = stack[stack.length - 1];
+                    const obj = stack[stack.length - 1];
                     for (let i = 0; i < items.length; i += 2) {
                         if (obj.__setitem__) {
                             obj.__setitem__(items[i], items[i + 1]);
@@ -199,7 +198,7 @@ pickle.Unpickler = class {
                 case pickle.OpCode.APPENDS: {
                     const appends = stack;
                     stack = marker.pop();
-                    let list = stack[stack.length - 1];
+                    const list = stack[stack.length - 1];
                     list.push.apply(list, appends);
                     break;
                 }
@@ -368,8 +367,8 @@ pickle.Unpickler = class {
                         }
                         else {
                             i--;
-                            let osi = i;
-                            let oso = o;
+                            const osi = i;
+                            const oso = o;
                             for (let oi = 0; oi < 3; oi++) {
                                 if (i >= length) {
                                     i = osi;
@@ -377,7 +376,7 @@ pickle.Unpickler = class {
                                     a[o] = 0x5c;
                                     break;
                                 }
-                                let od = token.charCodeAt(i++);
+                                const od = token.charCodeAt(i++);
                                 if (od < 48 || od > 57) {
                                     i = osi;
                                     o = oso;

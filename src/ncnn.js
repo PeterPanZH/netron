@@ -1,5 +1,4 @@
 /* jshint esversion: 6 */
-/* eslint "indent": [ "error", 4, { "SwitchCase": 1 } ] */
 
 var ncnn = ncnn || {};
 var base = base || require('./base');
@@ -725,7 +724,7 @@ ncnn.BinaryParamReader = class {
             }
             let id = reader.int32();
             while (id != -233) {
-                let isArray = id <= -23300;
+                const isArray = id <= -23300;
                 if (isArray) {
                     id = -id - 23300;
                 }

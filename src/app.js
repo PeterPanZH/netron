@@ -1,5 +1,4 @@
 /* jshint esversion: 6 */
-/* eslint "indent": [ "error", 4, { "SwitchCase": 1 } ] */
 
 const electron = require('electron');
 const updater = require('electron-updater');
@@ -95,7 +94,7 @@ class Application {
             this._configuration.set('userId', require('uuid').v4());
         }
         if (this._openFileQueue) {
-            let openFileQueue = this._openFileQueue;
+            const openFileQueue = this._openFileQueue;
             this._openFileQueue = null;
             while (openFileQueue.length > 0) {
                 const file = openFileQueue.shift();
@@ -338,7 +337,7 @@ class Application {
     }
 
     _resetMenu() {
-        let menuRecentsTemplate = [];
+        const menuRecentsTemplate = [];
         if (this._configuration.has('recents')) {
             let recents = this._configuration.get('recents');
             recents = recents.filter(recent => fs.existsSync(recent.path) && fs.statSync(recent.path).isFile());
@@ -357,7 +356,7 @@ class Application {
             }
         }
 
-        let menuTemplate = [];
+        const menuTemplate = [];
 
         if (process.platform === 'darwin') {
             menuTemplate.unshift({
@@ -468,6 +467,11 @@ class Application {
                     accelerator: 'CmdOrCtrl+U',
                     click: () => this.execute('toggle-names', null),
                 },
+                {
+                    id: 'view.show-horizontal',
+                    accelerator: 'CmdOrCtrl+K',
+                    click: () => this.execute('toggle-direction', null),
+                },
                 { type: 'separator' },
                 {
                     id: 'view.reload',
@@ -576,6 +580,10 @@ class Application {
             enabled: (context) => { return context.view && context.view.path ? true : false; },
             label: (context) => { return !context.view || !context.view.get('show-names') ? 'Show &Names' : 'Hide &Names'; }
         });
+        commandTable.set('view.show-horizontal', {
+            enabled: (context) => { return context.view && context.view.path ? true : false; },
+            label: (context) => { return !context.view || !context.view.get('show-horizontal') ? 'Show &Horizontal' : 'Show &Vertical'; }
+        });
         commandTable.set('view.reload', {
             enabled: (context) => { return context.view && context.view.path ? true : false; }
         });
@@ -617,7 +625,7 @@ class View {
         this._properties = new Map();
 
         const size = electron.screen.getPrimaryDisplay().workAreaSize;
-        let options = {
+        const options = {
             show: false,
             title: electron.app.name,
             backgroundColor: electron.nativeTheme.shouldUseDarkColors ? '#1d1d1d' : '#e6e6e6',

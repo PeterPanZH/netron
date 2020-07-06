@@ -9,15 +9,13 @@ import setuptools
 import setuptools.command.build_py
 import distutils.command.build
 
-node_dependencies = [ 
+node_dependencies = [
     ( 'netron', [
         'node_modules/d3/dist/d3.min.js',
         'node_modules/dagre/dist/dagre.min.js',
         'node_modules/marked/marked.min.js',
         'node_modules/pako/dist/pako.min.js',
         'node_modules/long/dist/long.js',
-        'node_modules/protobufjs/dist/protobuf.min.js',
-        'node_modules/protobufjs/ext/prototxt/prototxt.js',
         'node_modules/flatbuffers/js/flatbuffers.js' ] )
 ]
 
@@ -93,9 +91,9 @@ setuptools.setup(
         'netron'
     ],
     package_data={
-        'netron': [ 
+        'netron': [
             'favicon.ico', 'icon.png',
-            'base.js', 
+            'base.js', 'protobuf.js',
             'numpy.js', 'pickle.js', 'hdf5.js', 'bson.js',
             'zip.js', 'tar.js', 'gzip.js',
             'armnn.js', 'armnn-metadata.json', 'armnn-schema.js',
@@ -121,9 +119,9 @@ setuptools.setup(
             'paddle.js', 'paddle-metadata.json', 'paddle-proto.js',
             'pytorch.js', 'pytorch-metadata.json', 'python.js',
             'sklearn.js', 'sklearn-metadata.json',
-            'tengine.js', 'tengine-metadata.json', 
+            'tengine.js', 'tengine-metadata.json',
             'uff.js', 'uff-metadata.json', 'uff-proto.js',
-            'tf.js', 'tf-metadata.json', 'tf-proto.js', 
+            'tf.js', 'tf-metadata.json', 'tf-proto.js',
             'tflite.js', 'tflite-metadata.json', 'tflite-schema.js',
             'torch.js', 'torch-metadata.json',
             'index.html', 'index.js',

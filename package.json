@@ -6,7 +6,7 @@
         "email": "lutzroeder@users.noreply.github.com",
         "url": "https://www.lutzroeder.com"
     },
-    "version": "4.3.5",
+    "version": "4.3.8",
     "description": "Visualizer for neural network, deep learning and machine learning models",
     "license": "MIT",
     "repository": "lutzroeder/netron",
@@ -23,14 +23,13 @@
         "long": "4.0.0",
         "marked": "1.1.0",
         "pako": "1.0.11",
-        "protobufjs": "github:lutzroeder/protobuf.js",
         "universal-analytics": "0.4.20"
     },
     "devDependencies": {
         "electron": "9.0.5",
         "electron-builder": "22.7.0",
         "electron-notarize": "1.0.0",
-        "eslint": "7.3.1",
+        "eslint": "7.4.0",
         "xmldom": "0.3.0"
     }
 }

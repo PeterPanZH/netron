@@ -1,5 +1,4 @@
 /* jshint esversion: 6 */
-/* eslint "indent": [ "error", 4, { "SwitchCase": 1 } ] */
 
 // Experimental
 
@@ -75,7 +74,7 @@ mlnet.Graph = class {
             }
         }
 
-        let scope = new Map();
+        const scope = new Map();
         if (reader.dataLoaderModel) {
             this._loadTransformer(metadata, scope, '', reader.dataLoaderModel);
         }
@@ -265,7 +264,7 @@ mlnet.Attribute = class {
             }
             if (this._type) {
                 let type = mlnet;
-                let id = this._type.split('.');
+                const id = this._type.split('.');
                 while (type && id.length > 0) {
                     type = type[id.shift()];
                 }
@@ -426,7 +425,7 @@ mlnet.ModelReader = class {
 
     constructor(entries) {
 
-        let catalog = new mlnet.ComponentCatalog();
+        const catalog = new mlnet.ComponentCatalog();
         catalog.register('AffineNormExec', mlnet.AffineNormSerializationUtils);
         catalog.register('AnomalyPredXfer', mlnet.AnomalyPredictionTransformer);
         catalog.register('BinaryPredXfer', mlnet.BinaryPredictionTransformer);
@@ -637,7 +636,7 @@ mlnet.ModelHeader = class {
         const entry = this._entries.find((entry) => entry.name == entryName || entry.name == entryName.replace(/\//g, '\\'));
         if (entry) {
             const context = new mlnet.ModelHeader(this._catalog, this._entries, name, entry.data);
-            let value = this._catalog.create(context.loaderSignature, context);
+            const value = this._catalog.create(context.loaderSignature, context);
             value.__type__ = value.__type__ || context.loaderSignature;
             value.__name__ = name;
             return value;
@@ -712,7 +711,7 @@ mlnet.Reader = class {
     }
 
     booleans(count) {
-        let values = [];
+        const values = [];
         for (let i = 0; i < count; i++) {
             values.push(this.boolean());
         }
@@ -750,7 +749,7 @@ mlnet.Reader = class {
     }
 
     int32s(count) {
-        let values = [];
+        const values = [];
         for (let i = 0; i < count; i++) {
             values.push(this.int32());
         }
@@ -764,7 +763,7 @@ mlnet.Reader = class {
     }
 
     uint32s(count) {
-        let values = [];
+        const values = [];
         for (let i = 0; i < count; i++) {
             values.push(this.uint32());
         }
@@ -805,7 +804,7 @@ mlnet.Reader = class {
     }
 
     float32s(count) {
-        let values = [];
+        const values = [];
         for (let i = 0; i < count; i++) {
             values.push(this.float32());
         }
@@ -819,7 +818,7 @@ mlnet.Reader = class {
     }
 
     float64s(count) {
-        let values = [];
+        const values = [];
         for (let i = 0; i < count; i++) {
             values.push(this.float64());
         }
@@ -870,7 +869,7 @@ mlnet.BinaryLoader = class { // 'BINLOADR'
         this.schema = {};
         this.schema.inputs = [];
         for (let c = 0; c < columnCount; c  ++) {
-            let input = {};
+            const input = {};
             input.name = reader.string();
             input.type = new mlnet.Codec(reader);
             input.compression = reader.byte(); // None = 0, Deflate = 1
@@ -967,7 +966,7 @@ mlnet.ColumnConcatenatingTransformer = class {
                 const n = reader.int32();
                 this.inputs = [];
                 for (let j = 0; j < n; j++) {
-                    let input = {
+                    const input = {
                         name: context.string()
                     };
                     const alias = context.string(null);
@@ -981,22 +980,22 @@ mlnet.ColumnConcatenatingTransformer = class {
         else {
             this.precision = reader.int32();
             const n = reader.int32();
-            let names = [];
-            let inputs = [];
+            const names = [];
+            const inputs = [];
             for (let i = 0; i < n; i++) {
                 names.push(context.string());
                 const numSources = reader.int32();
-                let input = [];
+                const input = [];
                 for (let j = 0; j < numSources; j++) {
                     input.push(context.string());
                 }
                 inputs.push(input);
             }
-            let aliases = [];
+            const aliases = [];
             if (context.modelVersionReadable >= 0x00010002) {
                 for (let i = 0; i < n; i++) {
                     /* let length = */ inputs[i].length;
-                    let alias = {};
+                    const alias = {};
                     aliases.push(alias);
                     if (context.modelVersionReadable >= 0x00010002) {
                         for (;;) {
@@ -1297,7 +1296,7 @@ mlnet.LinearMulticlassModelParametersBase = class extends mlnet.ModelParametersB
 
             const starts = reader.int32s(reader.int32());
             /* let numIndices = */ reader.int32();
-            let indices = [];
+            const indices = [];
             for (let i = 0; i < numberOfClasses; i++) {
                 indices.push(reader.int32s(starts[i + 1] - starts[i]));
             }
@@ -1430,9 +1429,9 @@ mlnet.NgramHashingTransformer = class extends mlnet.RowToRowTransformerBase {
         else {
             for (let i = 0; i < columnsLength; i++) {
                 this.outputs.push(context.string());
-                let csrc = reader.int32();
+                const csrc = reader.int32();
                 for (let j = 0; j < csrc; j++) {
-                    let src = context.string();
+                    const src = context.string();
                     this.inputs.push(src);
                     // TODO inputs[i][j] = src;
                 }
@@ -1489,7 +1488,7 @@ mlnet.PrincipalComponentAnalysisTransformer = class extends mlnet.OneToOneTransf
         }
         this.TransformInfos = [];
         for (let i = 0; i < this.inputs.length; i++) {
-            let option = {};
+            const option = {};
             option.Dimension = reader.int32();
             option.Rank = reader.int32();
             option.Eigenvectors = [];
@@ -1563,7 +1562,7 @@ mlnet.ImageResizingTransformer = class extends mlnet.OneToOneTransformerBase {
         else {
             this.Options = [];
             for (let i = 0; i < this.inputs.length; i++) {
-                let option = {};
+                const option = {};
                 this._option(reader, option);
                 this.Options.push(option);
             }
@@ -1603,7 +1602,7 @@ mlnet.ImagePixelExtractingTransformer = class extends mlnet.OneToOneTransformerB
         else {
             this.Options = [];
             for (let i = 0; i < this.inputs.length; i++) {
-                let option = {};
+                const option = {};
                 this._option(context, reader, option);
                 this.Options.push(option);
             }
@@ -1944,7 +1943,7 @@ mlnet.TextFeaturizingEstimator = class {
             // throw new mlnet.Error('Unsupported TextFeaturizingEstimator format.');
         }
         else {
-            let chain = context.open('Chain');
+            const chain = context.open('Chain');
             this.chain = chain.chain;
         }
     }
@@ -1970,8 +1969,8 @@ mlnet.TextLoader = class {
 mlnet.TextLoader.Bindinds = class {
 
     constructor(context) {
-        let reader = context.reader;
-        let cinfo = reader.int32();
+        const reader = context.reader;
+        const cinfo = reader.int32();
         for (let i = 0; i < cinfo; i++) {
             // debugger;
         }
@@ -2012,8 +2011,8 @@ mlnet.ValueMapperCalibratedModelParametersBase = class extends mlnet.CalibratedM
 mlnet.CalibratedPredictor = class extends mlnet.ValueMapperCalibratedPredictorBase {
 
     constructor(context) {
-        let predictor = context.open('Predictor');
-        let calibrator = context.open('Calibrator');
+        const predictor = context.open('Predictor');
+        const calibrator = context.open('Calibrator');
         super(predictor, calibrator);
     }
 };
@@ -2028,7 +2027,7 @@ mlnet.ParameterMixingCalibratedModelParameters = class extends mlnet.ValueMapper
 mlnet.FieldAwareFactorizationMachineModelParameters = class {
 
     constructor(context) {
-        let reader = context.reader;
+        const reader = context.reader;
         this.Norm = reader.boolean();
         this.FieldCount = reader.int32();
         this.FeatureCount = reader.int32();
@@ -2296,7 +2295,7 @@ mlnet.Codec = class {
     }
 
     read(reader, count) {
-        let values = [];
+        const values = [];
         switch (this.name) {
             case 'Single':
                 for (let i = 0; i < count; i++) {
@@ -2350,7 +2349,7 @@ mlnet.AnomalyDetectionStateBase = class {
     static _deserializeFixedSizeQueueDouble(reader) {
         /* let capacity = */ reader.int32();
         const count = reader.int32();
-        let queue = [];
+        const queue = [];
         for (let i = 0; i < count; i++) {
             queue.push(reader.float64());
         }
@@ -2377,7 +2376,7 @@ mlnet.TimeSeriesUtils = class {
     static deserializeFixedSizeQueueSingle(reader) {
         /* const capacity = */ reader.int32();
         const count = reader.int32();
-        let queue = [];
+        const queue = [];
         for (let i = 0; i < count; i++) {
             queue.push(reader.float32());
         }

@@ -1,5 +1,4 @@
 /* jshint esversion: 6 */
-/* eslint "indent": [ "error", 4, { "SwitchCase": 1 } ] */
 
 var host = host || {};
 
@@ -11,7 +10,7 @@ const process = require('process');
 const path = require('path');
 const view = require('./view');
 
-global.protobuf = require('protobufjs');
+global.protobuf = require('./protobuf');
 
 host.ElectronHost = class {
 
@@ -116,6 +115,10 @@ host.ElectronHost = class {
         electron.ipcRenderer.on('toggle-names', () => {
             this._view.toggleNames();
             this._update('show-names', this._view.showNames);
+        });
+        electron.ipcRenderer.on('toggle-direction', () => {
+            this._view.toggleDirection();
+            this._update('show-horizontal', this._view.showHorizontal);
         });
         electron.ipcRenderer.on('zoom-in', () => {
             this.document.getElementById('zoom-in-button').click();

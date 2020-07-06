@@ -1,5 +1,4 @@
 /* jshint esversion: 6 */
-/* eslint "indent": [ "error", 4, { "SwitchCase": 1 } ] */
 
 var mnn = mnn || {};
 var base = base || require('./base');
@@ -284,7 +283,7 @@ mnn.Node = class {
             if (parameter[attributeName] && typeof parameter[attributeName] == 'function') {
                 let value = null;
                 if (attributeArrayNamesMap[attributeName]) {
-                    let array = [];
+                    const array = [];
                     const length = parameter[attributeName + 'Length']();
                     for (let i = 0; i < length; i++) {
                         array.push(parameter[attributeName](i));
