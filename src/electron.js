@@ -11,6 +11,7 @@ const path = require('path');
 const view = require('./view');
 
 global.protobuf = require('./protobuf');
+global.flatbuffers = require('./flatbuffers');
 
 host.ElectronHost = class {
 
@@ -87,7 +88,9 @@ host.ElectronHost = class {
         this._view.show('welcome');
 
         electron.ipcRenderer.on('open', (_, data) => {
-            this._openFile(data.file);
+            if (this._view.accept(data.file)) {
+                this._openFile(data.file);
+            }
         });
         electron.ipcRenderer.on('export', (_, data) => {
             this._view.export(data.file);
@@ -155,13 +158,7 @@ host.ElectronHost = class {
         });
         this.document.body.addEventListener('drop', (e) => {
             e.preventDefault();
-            const files = [];
-            for (let i = 0; i < e.dataTransfer.files.length; i++) {
-                const file = e.dataTransfer.files[i].path;
-                if (this._view.accept(file)) {
-                    files.push(e.dataTransfer.files[i].path);
-                }
-            }
+            const files = Array.from(e.dataTransfer.files).map(((file) => file.path));
             if (files.length > 0) {
                 electron.ipcRenderer.send('drop-files', { files: files });
             }
@@ -347,9 +344,7 @@ host.ElectronHost = class {
                     this._update('show-names', this._view.showNames);
                 }).catch((error) => {
                     if (error) {
-                        this._view.show(null);
-                        this.exception(error, false);
-                        this.error(error.name, error.message);
+                        this._view.error(error, null, null);
                         this._update('path', null);
                     }
                     this._update('show-attributes', this._view.showAttributes);
@@ -357,9 +352,7 @@ host.ElectronHost = class {
                     this._update('show-names', this._view.showNames);
                 });
             }).catch((error) => {
-                this.exception(error, false);
-                this._view.show(null);
-                this.error('Error while reading file.', error.message);
+                this._view.error(error, 'Error while reading file.', null);
                 this._update('path', null);
             });
         }

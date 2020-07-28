@@ -29,6 +29,7 @@ def metadata():
         'Identity': 'Control',
         'LeakyRelu': 'Activation',
         'LRN': 'Normalization',
+        'LSTMBlockCell': 'Layer',
         'MaxPool': 'Pool',
         'MaxPoolV2': 'Pool',
         'Pad': 'Tensor',
@@ -361,7 +362,7 @@ def metadata():
             json_schema['outputs'].append(json_output)
         json_root.append({
             'name': op.name,
-            'schema': json_schema
+            'schema': json_schema 
         })
 
     json_file = os.path.join(os.path.dirname(__file__), '../src/tf-metadata.json')

@@ -1,829 +1,983 @@
-(function($protobuf) {
-    "use strict";
+var $root = protobuf.get('uff');
 
-    const $root = $protobuf.get('uff');
+$root.uff = {};
 
-    $root.uff = (function() {
+$root.uff.MetaGraph = class MetaGraph {
 
-        const uff = {};
+    constructor() {
+        this.descriptors = [];
+        this.graphs = [];
+        this.referenced_data = [];
+        this.extra_fields = [];
+    }
 
-        uff.MetaGraph = (function() {
-
-            function MetaGraph() {
-                this.descriptors = [];
-                this.graphs = [];
-                this.referenced_data = [];
+    static decode(reader, length) {
+        const message = new $root.uff.MetaGraph();
+        const end = reader.next(length);
+        while (reader.end(end)) {
+            const tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1:
+                    message.version = reader.int64();
+                    break;
+                case 2:
+                    message.descriptor_core_version = reader.int64();
+                    break;
+                case 3:
+                    message.descriptors.push($root.uff.Descriptor.decode(reader, reader.uint32()));
+                    break;
+                case 4:
+                    message.graphs.push($root.uff.Graph.decode(reader, reader.uint32()));
+                    break;
+                case 5:
+                    message.referenced_data.push($root.uff.MetaGraph.ReferencedDataEntry.decode(reader, reader.uint32()));
+                    break;
+                case 100:
+                    message.extra_fields.push($root.uff.MetaGraph.ExtraFieldsEntry.decode(reader, reader.uint32()));
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
             }
+        }
+        return message;
+    }
 
-            MetaGraph.prototype.version = $protobuf.Long ? $protobuf.Long.fromBits(0, 0, false) : 0;
-            MetaGraph.prototype.descriptor_core_version = $protobuf.Long ? $protobuf.Long.fromBits(0, 0, false) : 0;
-            MetaGraph.prototype.descriptors = [];
-            MetaGraph.prototype.graphs = [];
-            MetaGraph.prototype.referenced_data = [];
-
-            MetaGraph.decode = function (reader, length) {
-                const message = new $root.uff.MetaGraph();
-                const end = reader.next(length);
-                while (reader.end(end)) {
-                    const tag = reader.uint32();
-                    switch (tag >>> 3) {
-                        case 1:
-                            message.version = reader.int64();
-                            break;
-                        case 2:
-                            message.descriptor_core_version = reader.int64();
-                            break;
-                        case 3:
-                            message.descriptors.push($root.uff.Descriptor.decode(reader, reader.uint32()));
-                            break;
-                        case 4:
-                            message.graphs.push($root.uff.Graph.decode(reader, reader.uint32()));
-                            break;
-                        case 5:
-                            message.referenced_data.push($root.uff.KeyValuePair.decode(reader, reader.uint32()));
-                            break;
-                        default:
-                            reader.skipType(tag & 7);
-                            break;
-                    }
-                }
-                return message;
-            };
-
-            MetaGraph.decodeText = function (reader) {
-                const message = new $root.uff.MetaGraph();
-                reader.start();
-                while (!reader.end()) {
-                    const tag = reader.tag();
-                    switch (tag) {
-                        case "version":
-                            message.version = reader.int64();
-                            break;
-                        case "descriptor_core_version":
-                            message.descriptor_core_version = reader.int64();
-                            break;
-                        case "descriptors":
-                            message.descriptors.push($root.uff.Descriptor.decodeText(reader, true));
-                            break;
-                        case "graphs":
-                            message.graphs.push($root.uff.Graph.decodeText(reader, true));
-                            break;
-                        case "referenced_data":
-                            message.referenced_data.push($root.uff.KeyValuePair.decodeText(reader, true));
-                            break;
-                        default:
-                            reader.field(tag, message);
-                            break;
-                    }
-                }
-                return message;
-            };
-
-            return MetaGraph;
-        })();
-
-        uff.Descriptor = (function() {
-
-            function Descriptor() {
+    static decodeText(reader) {
+        const message = new $root.uff.MetaGraph();
+        reader.start();
+        while (!reader.end()) {
+            const tag = reader.tag();
+            switch (tag) {
+                case "version":
+                    message.version = reader.integer();
+                    break;
+                case "descriptor_core_version":
+                    message.descriptor_core_version = reader.integer();
+                    break;
+                case "descriptors":
+                    message.descriptors.push($root.uff.Descriptor.decodeText(reader, true));
+                    break;
+                case "graphs":
+                    message.graphs.push($root.uff.Graph.decodeText(reader, true));
+                    break;
+                case "referenced_data":
+                    message.referenced_data.push($root.uff.MetaGraph.ReferencedDataEntry.decodeText(reader, true));
+                    break;
+                case "extra_fields":
+                    message.extra_fields.push($root.uff.MetaGraph.ExtraFieldsEntry.decodeText(reader, true));
+                    break;
+                default:
+                    reader.field(tag, message);
+                    break;
             }
+        }
+        return message;
+    }
+};
 
-            Descriptor.prototype.id = "";
-            Descriptor.prototype.version = $protobuf.Long ? $protobuf.Long.fromBits(0, 0, false) : 0;
+$root.uff.MetaGraph.prototype.version = protobuf.Long ? protobuf.Long.fromBits(0, 0, false) : 0;
+$root.uff.MetaGraph.prototype.descriptor_core_version = protobuf.Long ? protobuf.Long.fromBits(0, 0, false) : 0;
 
-            Descriptor.decode = function (reader, length) {
-                const message = new $root.uff.Descriptor();
-                const end = reader.next(length);
-                while (reader.end(end)) {
-                    const tag = reader.uint32();
-                    switch (tag >>> 3) {
-                        case 1:
-                            message.id = reader.string();
-                            break;
-                        case 2:
-                            message.version = reader.int64();
-                            break;
-                        default:
-                            reader.skipType(tag & 7);
-                            break;
-                    }
-                }
-                if (!Object.prototype.hasOwnProperty.call(message, 'id')) {
-                    throw $protobuf.Error("Excepted 'id'.");
-                }
-                if (!Object.prototype.hasOwnProperty.call(message, 'version')) {
-                    throw $protobuf.Error("Excepted 'version'.");
-                }
-                return message;
-            };
+$root.uff.MetaGraph.ReferencedDataEntry = class ReferencedDataEntry {
 
-            Descriptor.decodeText = function (reader) {
-                const message = new $root.uff.Descriptor();
-                reader.start();
-                while (!reader.end()) {
-                    const tag = reader.tag();
-                    switch (tag) {
-                        case "id":
-                            message.id = reader.string();
-                            break;
-                        case "version":
-                            message.version = reader.int64();
-                            break;
-                        default:
-                            reader.field(tag, message);
-                            break;
-                    }
-                }
-                if (!Object.prototype.hasOwnProperty.call(message, "id"))
-                    throw $protobuf.Error("Excepted 'id'.");
-                if (!Object.prototype.hasOwnProperty.call(message, "version"))
-                    throw $protobuf.Error("Excepted 'version'.");
-                return message;
-            };
+    constructor() {
+    }
 
-            return Descriptor;
-        })();
-
-        uff.Graph = (function() {
-
-            function Graph() {
-                this.nodes = [];
+    static decode(reader, length) {
+        const message = new $root.uff.MetaGraph.ReferencedDataEntry();
+        const end = reader.next(length);
+        while (reader.end(end)) {
+            const tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1:
+                    message.key = reader.string();
+                    break;
+                case 2:
+                    message.value = $root.uff.Data.decode(reader, reader.uint32());
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
             }
+        }
+        return message;
+    }
 
-            Graph.prototype.id = "";
-            Graph.prototype.nodes = [];
-
-            Graph.decode = function (reader, length) {
-                const message = new $root.uff.Graph();
-                const end = reader.next(length);
-                while (reader.end(end)) {
-                    const tag = reader.uint32();
-                    switch (tag >>> 3) {
-                        case 1:
-                            message.id = reader.string();
-                            break;
-                        case 2:
-                            message.nodes.push($root.uff.Node.decode(reader, reader.uint32()));
-                            break;
-                        default:
-                            reader.skipType(tag & 7);
-                            break;
-                    }
-                }
-                return message;
-            };
-
-            Graph.decodeText = function (reader) {
-                const message = new $root.uff.Graph();
-                reader.start();
-                while (!reader.end()) {
-                    const tag = reader.tag();
-                    switch (tag) {
-                        case "id":
-                            message.id = reader.string();
-                            break;
-                        case "nodes":
-                            message.nodes.push($root.uff.Node.decodeText(reader, true));
-                            break;
-                        default:
-                            reader.field(tag, message);
-                            break;
-                    }
-                }
-                return message;
-            };
-
-            return Graph;
-        })();
-
-        uff.Node = (function() {
-
-            function Node() {
-                this.inputs = [];
-                this.fields = [];
-                this.extra_fields = [];
+    static decodeText(reader) {
+        const message = new $root.uff.MetaGraph.ReferencedDataEntry();
+        reader.start();
+        while (!reader.end()) {
+            const tag = reader.tag();
+            switch (tag) {
+                case "key":
+                    message.key = reader.string();
+                    break;
+                case "value":
+                    message.value = $root.uff.Data.decodeText(reader, true);
+                    break;
+                default:
+                    reader.field(tag, message);
+                    break;
             }
+        }
+        return message;
+    }
+};
 
-            Node.prototype.id = "";
-            Node.prototype.inputs = [];
-            Node.prototype.operation = "";
-            Node.prototype.fields = [];
-            Node.prototype.extra_fields = [];
+$root.uff.MetaGraph.ReferencedDataEntry.prototype.key = "";
+$root.uff.MetaGraph.ReferencedDataEntry.prototype.value = null;
 
-            Node.decode = function (reader, length) {
-                const message = new $root.uff.Node();
-                const end = reader.next(length);
-                while (reader.end(end)) {
-                    const tag = reader.uint32();
-                    switch (tag >>> 3) {
-                        case 1:
-                            message.id = reader.string();
-                            break;
-                        case 2:
-                            message.inputs.push(reader.string());
-                            break;
-                        case 3:
-                            message.operation = reader.string();
-                            break;
-                        case 4:
-                            message.fields.push($root.uff.KeyValuePair.decode(reader, reader.uint32()));
-                            break;
-                        case 5:
-                            message.extra_fields.push($root.uff.KeyValuePair.decode(reader, reader.uint32()));
-                            break;
-                        default:
-                            reader.skipType(tag & 7);
-                            break;
-                    }
-                }
-                if (!Object.prototype.hasOwnProperty.call(message, 'id')) {
-                    throw $protobuf.Error("Excepted 'id'.");
-                }
-                if (!Object.prototype.hasOwnProperty.call(message, 'operation')) {
-                    throw $protobuf.Error("Excepted 'operation'.");
-                }
-                return message;
-            };
+$root.uff.MetaGraph.ExtraFieldsEntry = class ExtraFieldsEntry {
 
-            Node.decodeText = function (reader) {
-                const message = new $root.uff.Node();
-                reader.start();
-                while (!reader.end()) {
-                    const tag = reader.tag();
-                    switch (tag) {
-                        case "id":
-                            message.id = reader.string();
-                            break;
-                        case "inputs":
-                            reader.array(message.inputs, () => reader.string());
-                            break;
-                        case "operation":
-                            message.operation = reader.string();
-                            break;
-                        case "fields":
-                            message.fields.push($root.uff.KeyValuePair.decodeText(reader, true));
-                            break;
-                        case "extra_fields":
-                            message.extra_fields.push($root.uff.KeyValuePair.decodeText(reader, true));
-                            break;
-                        default:
-                            reader.field(tag, message);
-                            break;
-                    }
-                }
-                if (!Object.prototype.hasOwnProperty.call(message, "id"))
-                    throw $protobuf.Error("Excepted 'id'.");
-                if (!Object.prototype.hasOwnProperty.call(message, "operation"))
-                    throw $protobuf.Error("Excepted 'operation'.");
-                return message;
-            };
+    constructor() {
+    }
 
-            return Node;
-        })();
-
-        uff.KeyValuePair = (function() {
-
-            function KeyValuePair() {
+    static decode(reader, length) {
+        const message = new $root.uff.MetaGraph.ExtraFieldsEntry();
+        const end = reader.next(length);
+        while (reader.end(end)) {
+            const tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1:
+                    message.key = reader.string();
+                    break;
+                case 2:
+                    message.value = $root.uff.Data.decode(reader, reader.uint32());
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
             }
+        }
+        return message;
+    }
 
-            KeyValuePair.prototype.key = "";
-            KeyValuePair.prototype.value = null;
-
-            KeyValuePair.decode = function (reader, length) {
-                const message = new $root.uff.KeyValuePair();
-                const end = reader.next(length);
-                while (reader.end(end)) {
-                    const tag = reader.uint32();
-                    switch (tag >>> 3) {
-                        case 1:
-                            message.key = reader.string();
-                            break;
-                        case 2:
-                            message.value = $root.uff.Value.decode(reader, reader.uint32());
-                            break;
-                        default:
-                            reader.skipType(tag & 7);
-                            break;
-                    }
-                }
-                if (!Object.prototype.hasOwnProperty.call(message, 'key')) {
-                    throw $protobuf.Error("Excepted 'key'.");
-                }
-                if (!Object.prototype.hasOwnProperty.call(message, 'value')) {
-                    throw $protobuf.Error("Excepted 'value'.");
-                }
-                return message;
-            };
-
-            KeyValuePair.decodeText = function (reader) {
-                const message = new $root.uff.KeyValuePair();
-                reader.start();
-                while (!reader.end()) {
-                    const tag = reader.tag();
-                    switch (tag) {
-                        case "key":
-                            message.key = reader.string();
-                            break;
-                        case "value":
-                            message.value = $root.uff.Value.decodeText(reader, true);
-                            break;
-                        default:
-                            reader.field(tag, message);
-                            break;
-                    }
-                }
-                if (!Object.prototype.hasOwnProperty.call(message, "key"))
-                    throw $protobuf.Error("Excepted 'key'.");
-                if (!Object.prototype.hasOwnProperty.call(message, "value"))
-                    throw $protobuf.Error("Excepted 'value'.");
-                return message;
-            };
-
-            return KeyValuePair;
-        })();
-
-        uff.Value = (function() {
-
-            function Value() {
+    static decodeText(reader) {
+        const message = new $root.uff.MetaGraph.ExtraFieldsEntry();
+        reader.start();
+        while (!reader.end()) {
+            const tag = reader.tag();
+            switch (tag) {
+                case "key":
+                    message.key = reader.string();
+                    break;
+                case "value":
+                    message.value = $root.uff.Data.decodeText(reader, true);
+                    break;
+                default:
+                    reader.field(tag, message);
+                    break;
             }
+        }
+        return message;
+    }
+};
 
-            Value.prototype.s = "";
-            Value.prototype.s_list = null;
-            Value.prototype.d = 0;
-            Value.prototype.d_list = null;
-            Value.prototype.b = false;
-            Value.prototype.b_list = false;
-            Value.prototype.i = $protobuf.Long ? $protobuf.Long.fromBits(0, 0, false) : 0;
-            Value.prototype.i_list = null;
-            Value.prototype.blob = new Uint8Array([]);
-            Value.prototype.ref = "";
-            Value.prototype.dtype = 65544;
-            Value.prototype.dtype_list = null;
-            Value.prototype.dim_orders = null;
-            Value.prototype.dim_orders_list = null;
+$root.uff.MetaGraph.ExtraFieldsEntry.prototype.key = "";
+$root.uff.MetaGraph.ExtraFieldsEntry.prototype.value = null;
 
-            const typeSet = new Set([ "s", "s_list", "d", "d_list", "b", "b_list", "i", "i_list", "blob", "ref", "dtype", "dtype_list", "dim_orders", "dim_orders_list"]);
-            Object.defineProperty(Value.prototype, "type", {
-                get: function() { return Object.keys(this).find((key) => typeSet.has(key) && this[key] != null); }
-            });
+$root.uff.Descriptor = class Descriptor {
 
-            Value.decode = function (reader, length) {
-                const message = new $root.uff.Value();
-                const end = reader.next(length);
-                while (reader.end(end)) {
-                    const tag = reader.uint32();
-                    switch (tag >>> 3) {
-                        case 1:
-                            message.s = reader.string();
-                            break;
-                        case 2:
-                            message.s_list = $root.uff.ListString.decode(reader, reader.uint32());
-                            break;
-                        case 3:
-                            message.d = reader.double();
-                            break;
-                        case 4:
-                            message.d_list = $root.uff.ListDouble.decode(reader, reader.uint32());
-                            break;
-                        case 5:
-                            message.b = reader.bool();
-                            break;
-                        case 6:
-                            message.b_list = reader.bool();
-                            break;
-                        case 7:
-                            message.i = reader.int64();
-                            break;
-                        case 8:
-                            message.i_list = $root.uff.ListInt.decode(reader, reader.uint32());
-                            break;
-                        case 9:
-                            message.blob = reader.bytes();
-                            break;
-                        case 100:
-                            message.ref = reader.string();
-                            break;
-                        case 101:
-                            message.dtype = reader.int32();
-                            break;
-                        case 102:
-                            message.dtype_list = $root.uff.ListDataType.decode(reader, reader.uint32());
-                            break;
-                        case 103:
-                            message.dim_orders = $root.uff.DimOrders.decode(reader, reader.uint32());
-                            break;
-                        case 104:
-                            message.dim_orders_list = $root.uff.ListDimOrders.decode(reader, reader.uint32());
-                            break;
-                        default:
-                            reader.skipType(tag & 7);
-                            break;
-                    }
-                }
-                return message;
-            };
+    constructor() {
+    }
 
-            Value.decodeText = function (reader) {
-                const message = new $root.uff.Value();
-                reader.start();
-                while (!reader.end()) {
-                    const tag = reader.tag();
-                    switch (tag) {
-                        case "s":
-                            message.s = reader.string();
-                            break;
-                        case "s_list":
-                            message.s_list = $root.uff.ListString.decodeText(reader, true);
-                            break;
-                        case "d":
-                            message.d = reader.double();
-                            break;
-                        case "d_list":
-                            message.d_list = $root.uff.ListDouble.decodeText(reader, true);
-                            break;
-                        case "b":
-                            message.b = reader.bool();
-                            break;
-                        case "b_list":
-                            message.b_list = reader.bool();
-                            break;
-                        case "i":
-                            message.i = reader.int64();
-                            break;
-                        case "i_list":
-                            message.i_list = $root.uff.ListInt.decodeText(reader, true);
-                            break;
-                        case "blob":
-                            message.blob = reader.bytes();
-                            break;
-                        case "ref":
-                            message.ref = reader.string();
-                            break;
-                        case "dtype":
-                            message.dtype = reader.enum($root.uff.DataType);
-                            break;
-                        case "dtype_list":
-                            message.dtype_list = $root.uff.ListDataType.decodeText(reader, true);
-                            break;
-                        case "dim_orders":
-                            message.dim_orders = $root.uff.DimOrders.decodeText(reader, true);
-                            break;
-                        case "dim_orders_list":
-                            message.dim_orders_list = $root.uff.ListDimOrders.decodeText(reader, true);
-                            break;
-                        default:
-                            reader.field(tag, message);
-                            break;
-                    }
-                }
-                return message;
-            };
-
-            return Value;
-        })();
-
-        uff.DataType = (function() {
-            const values = {};
-            values["DT_INT8"] = 65544;
-            values["DT_INT16"] = 65552;
-            values["DT_INT32"] = 65568;
-            values["DT_INT64"] = 65600;
-            values["DT_FLOAT16"] = 131088;
-            values["DT_FLOAT32"] = 131104;
-            return values;
-        })();
-
-        uff.DimOrder = (function() {
-
-            function DimOrder() {
+    static decode(reader, length) {
+        const message = new $root.uff.Descriptor();
+        const end = reader.next(length);
+        while (reader.end(end)) {
+            const tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1:
+                    message.id = reader.string();
+                    break;
+                case 2:
+                    message.version = reader.int64();
+                    break;
+                case 3:
+                    message.optional = reader.bool();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
             }
+        }
+        return message;
+    }
 
-            DimOrder.prototype.key = $protobuf.Long ? $protobuf.Long.fromBits(0, 0, false) : 0;
-            DimOrder.prototype.value = null;
-
-            DimOrder.decode = function (reader, length) {
-                const message = new $root.uff.DimOrder();
-                const end = reader.next(length);
-                while (reader.end(end)) {
-                    const tag = reader.uint32();
-                    switch (tag >>> 3) {
-                        case 1:
-                            message.key = reader.int64();
-                            break;
-                        case 2:
-                            message.value = $root.uff.ListInt.decode(reader, reader.uint32());
-                            break;
-                        default:
-                            reader.skipType(tag & 7);
-                            break;
-                    }
-                }
-                if (!Object.prototype.hasOwnProperty.call(message, 'key')) {
-                    throw $protobuf.Error("Excepted 'key'.");
-                }
-                if (!Object.prototype.hasOwnProperty.call(message, 'value')) {
-                    throw $protobuf.Error("Excepted 'value'.");
-                }
-                return message;
-            };
-
-            DimOrder.decodeText = function (reader) {
-                const message = new $root.uff.DimOrder();
-                reader.start();
-                while (!reader.end()) {
-                    const tag = reader.tag();
-                    switch (tag) {
-                        case "key":
-                            message.key = reader.int64();
-                            break;
-                        case "value":
-                            message.value = $root.uff.ListInt.decodeText(reader, true);
-                            break;
-                        default:
-                            reader.field(tag, message);
-                            break;
-                    }
-                }
-                if (!Object.prototype.hasOwnProperty.call(message, "key"))
-                    throw $protobuf.Error("Excepted 'key'.");
-                if (!Object.prototype.hasOwnProperty.call(message, "value"))
-                    throw $protobuf.Error("Excepted 'value'.");
-                return message;
-            };
-
-            return DimOrder;
-        })();
-
-        uff.DimOrders = (function() {
-
-            function DimOrders() {
-                this.orders = [];
+    static decodeText(reader) {
+        const message = new $root.uff.Descriptor();
+        reader.start();
+        while (!reader.end()) {
+            const tag = reader.tag();
+            switch (tag) {
+                case "id":
+                    message.id = reader.string();
+                    break;
+                case "version":
+                    message.version = reader.integer();
+                    break;
+                case "optional":
+                    message.optional = reader.boolean();
+                    break;
+                default:
+                    reader.field(tag, message);
+                    break;
             }
+        }
+        return message;
+    }
+};
 
-            DimOrders.prototype.orders = [];
+$root.uff.Descriptor.prototype.id = "";
+$root.uff.Descriptor.prototype.version = protobuf.Long ? protobuf.Long.fromBits(0, 0, false) : 0;
+$root.uff.Descriptor.prototype.optional = false;
 
-            DimOrders.decode = function (reader, length) {
-                const message = new $root.uff.DimOrders();
-                const end = reader.next(length);
-                while (reader.end(end)) {
-                    const tag = reader.uint32();
-                    switch (tag >>> 3) {
-                        case 1:
-                            message.orders.push($root.uff.DimOrder.decode(reader, reader.uint32()));
-                            break;
-                        default:
-                            reader.skipType(tag & 7);
-                            break;
-                    }
-                }
-                return message;
-            };
+$root.uff.Graph = class Graph {
 
-            DimOrders.decodeText = function (reader) {
-                const message = new $root.uff.DimOrders();
-                reader.start();
-                while (!reader.end()) {
-                    const tag = reader.tag();
-                    switch (tag) {
-                        case "orders":
-                            message.orders.push($root.uff.DimOrder.decodeText(reader, true));
-                            break;
-                        default:
-                            reader.field(tag, message);
-                            break;
-                    }
-                }
-                return message;
-            };
+    constructor() {
+        this.nodes = [];
+        this.extra_fields = [];
+    }
 
-            return DimOrders;
-        })();
-
-        uff.ListString = (function() {
-
-            function ListString() {
-                this.val = [];
+    static decode(reader, length) {
+        const message = new $root.uff.Graph();
+        const end = reader.next(length);
+        while (reader.end(end)) {
+            const tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1:
+                    message.id = reader.string();
+                    break;
+                case 2:
+                    message.nodes.push($root.uff.Node.decode(reader, reader.uint32()));
+                    break;
+                case 100:
+                    message.extra_fields.push($root.uff.Graph.ExtraFieldsEntry.decode(reader, reader.uint32()));
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
             }
+        }
+        return message;
+    }
 
-            ListString.prototype.val = [];
-
-            ListString.decode = function (reader, length) {
-                const message = new $root.uff.ListString();
-                const end = reader.next(length);
-                while (reader.end(end)) {
-                    const tag = reader.uint32();
-                    switch (tag >>> 3) {
-                        case 1:
-                            message.val.push(reader.string());
-                            break;
-                        default:
-                            reader.skipType(tag & 7);
-                            break;
-                    }
-                }
-                return message;
-            };
-
-            ListString.decodeText = function (reader) {
-                const message = new $root.uff.ListString();
-                reader.start();
-                while (!reader.end()) {
-                    const tag = reader.tag();
-                    switch (tag) {
-                        case "val":
-                            reader.array(message.val, () => reader.string());
-                            break;
-                        default:
-                            reader.field(tag, message);
-                            break;
-                    }
-                }
-                return message;
-            };
-
-            return ListString;
-        })();
-
-        uff.ListInt = (function() {
-
-            function ListInt() {
-                this.val = [];
+    static decodeText(reader) {
+        const message = new $root.uff.Graph();
+        reader.start();
+        while (!reader.end()) {
+            const tag = reader.tag();
+            switch (tag) {
+                case "id":
+                    message.id = reader.string();
+                    break;
+                case "nodes":
+                    message.nodes.push($root.uff.Node.decodeText(reader, true));
+                    break;
+                case "extra_fields":
+                    message.extra_fields.push($root.uff.Graph.ExtraFieldsEntry.decodeText(reader, true));
+                    break;
+                default:
+                    reader.field(tag, message);
+                    break;
             }
+        }
+        return message;
+    }
+};
 
-            ListInt.prototype.val = [];
+$root.uff.Graph.prototype.id = "";
 
-            ListInt.decode = function (reader, length) {
-                const message = new $root.uff.ListInt();
-                const end = reader.next(length);
-                while (reader.end(end)) {
-                    const tag = reader.uint32();
-                    switch (tag >>> 3) {
-                        case 1:
-                            message.val = reader.array(message.val, () => reader.int64(), tag);
-                            break;
-                        default:
-                            reader.skipType(tag & 7);
-                            break;
-                    }
-                }
-                return message;
-            };
+$root.uff.Graph.ExtraFieldsEntry = class ExtraFieldsEntry {
 
-            ListInt.decodeText = function (reader) {
-                const message = new $root.uff.ListInt();
-                reader.start();
-                while (!reader.end()) {
-                    const tag = reader.tag();
-                    switch (tag) {
-                        case "val":
-                            reader.array(message.val, () => reader.int64());
-                            break;
-                        default:
-                            reader.field(tag, message);
-                            break;
-                    }
-                }
-                return message;
-            };
+    constructor() {
+    }
 
-            return ListInt;
-        })();
-
-        uff.ListDouble = (function() {
-
-            function ListDouble() {
-                this.val = [];
+    static decode(reader, length) {
+        const message = new $root.uff.Graph.ExtraFieldsEntry();
+        const end = reader.next(length);
+        while (reader.end(end)) {
+            const tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1:
+                    message.key = reader.string();
+                    break;
+                case 2:
+                    message.value = $root.uff.Data.decode(reader, reader.uint32());
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
             }
+        }
+        return message;
+    }
 
-            ListDouble.prototype.val = [];
-
-            ListDouble.decode = function (reader, length) {
-                const message = new $root.uff.ListDouble();
-                const end = reader.next(length);
-                while (reader.end(end)) {
-                    const tag = reader.uint32();
-                    switch (tag >>> 3) {
-                        case 1:
-                            message.val = reader.doubles(message.val, tag);
-                            break;
-                        default:
-                            reader.skipType(tag & 7);
-                            break;
-                    }
-                }
-                return message;
-            };
-
-            ListDouble.decodeText = function (reader) {
-                const message = new $root.uff.ListDouble();
-                reader.start();
-                while (!reader.end()) {
-                    const tag = reader.tag();
-                    switch (tag) {
-                        case "val":
-                            reader.array(message.val, () => reader.double());
-                            break;
-                        default:
-                            reader.field(tag, message);
-                            break;
-                    }
-                }
-                return message;
-            };
-
-            return ListDouble;
-        })();
-
-        uff.ListDataType = (function() {
-
-            function ListDataType() {
-                this.val = [];
+    static decodeText(reader) {
+        const message = new $root.uff.Graph.ExtraFieldsEntry();
+        reader.start();
+        while (!reader.end()) {
+            const tag = reader.tag();
+            switch (tag) {
+                case "key":
+                    message.key = reader.string();
+                    break;
+                case "value":
+                    message.value = $root.uff.Data.decodeText(reader, true);
+                    break;
+                default:
+                    reader.field(tag, message);
+                    break;
             }
+        }
+        return message;
+    }
+};
 
-            ListDataType.prototype.val = [];
+$root.uff.Graph.ExtraFieldsEntry.prototype.key = "";
+$root.uff.Graph.ExtraFieldsEntry.prototype.value = null;
 
-            ListDataType.decode = function (reader, length) {
-                const message = new $root.uff.ListDataType();
-                const end = reader.next(length);
-                while (reader.end(end)) {
-                    const tag = reader.uint32();
-                    switch (tag >>> 3) {
-                        case 1:
-                            message.val = reader.array(message.val, () => reader.int32(), tag);
-                            break;
-                        default:
-                            reader.skipType(tag & 7);
-                            break;
-                    }
-                }
-                return message;
-            };
+$root.uff.Node = class Node {
 
-            ListDataType.decodeText = function (reader) {
-                const message = new $root.uff.ListDataType();
-                reader.start();
-                while (!reader.end()) {
-                    const tag = reader.tag();
-                    switch (tag) {
-                        case "val":
-                            reader.array(message.val, () => reader.enum($root.uff.DataType));
-                            break;
-                        default:
-                            reader.field(tag, message);
-                            break;
-                    }
-                }
-                return message;
-            };
+    constructor() {
+        this.inputs = [];
+        this.fields = [];
+        this.extra_fields = [];
+    }
 
-            return ListDataType;
-        })();
-
-        uff.ListDimOrders = (function() {
-
-            function ListDimOrders() {
-                this.val = [];
+    static decode(reader, length) {
+        const message = new $root.uff.Node();
+        const end = reader.next(length);
+        while (reader.end(end)) {
+            const tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1:
+                    message.id = reader.string();
+                    break;
+                case 2:
+                    message.inputs.push(reader.string());
+                    break;
+                case 3:
+                    message.operation = reader.string();
+                    break;
+                case 4:
+                    message.fields.push($root.uff.Node.FieldsEntry.decode(reader, reader.uint32()));
+                    break;
+                case 100:
+                    message.extra_fields.push($root.uff.Node.ExtraFieldsEntry.decode(reader, reader.uint32()));
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
             }
+        }
+        return message;
+    }
 
-            ListDimOrders.prototype.val = [];
+    static decodeText(reader) {
+        const message = new $root.uff.Node();
+        reader.start();
+        while (!reader.end()) {
+            const tag = reader.tag();
+            switch (tag) {
+                case "id":
+                    message.id = reader.string();
+                    break;
+                case "inputs":
+                    reader.array(message.inputs, () => reader.string());
+                    break;
+                case "operation":
+                    message.operation = reader.string();
+                    break;
+                case "fields":
+                    message.fields.push($root.uff.Node.FieldsEntry.decodeText(reader, true));
+                    break;
+                case "extra_fields":
+                    message.extra_fields.push($root.uff.Node.ExtraFieldsEntry.decodeText(reader, true));
+                    break;
+                default:
+                    reader.field(tag, message);
+                    break;
+            }
+        }
+        return message;
+    }
+};
 
-            ListDimOrders.decode = function (reader, length) {
-                const message = new $root.uff.ListDimOrders();
-                const end = reader.next(length);
-                while (reader.end(end)) {
-                    const tag = reader.uint32();
-                    switch (tag >>> 3) {
-                        case 1:
-                            message.val.push($root.uff.DimOrders.decode(reader, reader.uint32()));
-                            break;
-                        default:
-                            reader.skipType(tag & 7);
-                            break;
-                    }
-                }
-                return message;
-            };
+$root.uff.Node.prototype.id = "";
+$root.uff.Node.prototype.operation = "";
 
-            ListDimOrders.decodeText = function (reader) {
-                const message = new $root.uff.ListDimOrders();
-                reader.start();
-                while (!reader.end()) {
-                    const tag = reader.tag();
-                    switch (tag) {
-                        case "val":
-                            message.val.push($root.uff.DimOrders.decodeText(reader, true));
-                            break;
-                        default:
-                            reader.field(tag, message);
-                            break;
-                    }
-                }
-                return message;
-            };
+$root.uff.Node.FieldsEntry = class FieldsEntry {
 
-            return ListDimOrders;
-        })();
+    constructor() {
+    }
 
-        return uff;
-    })();
-    return $root;
-})(protobuf);
+    static decode(reader, length) {
+        const message = new $root.uff.Node.FieldsEntry();
+        const end = reader.next(length);
+        while (reader.end(end)) {
+            const tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1:
+                    message.key = reader.string();
+                    break;
+                case 2:
+                    message.value = $root.uff.Data.decode(reader, reader.uint32());
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+            }
+        }
+        return message;
+    }
+
+    static decodeText(reader) {
+        const message = new $root.uff.Node.FieldsEntry();
+        reader.start();
+        while (!reader.end()) {
+            const tag = reader.tag();
+            switch (tag) {
+                case "key":
+                    message.key = reader.string();
+                    break;
+                case "value":
+                    message.value = $root.uff.Data.decodeText(reader, true);
+                    break;
+                default:
+                    reader.field(tag, message);
+                    break;
+            }
+        }
+        return message;
+    }
+};
+
+$root.uff.Node.FieldsEntry.prototype.key = "";
+$root.uff.Node.FieldsEntry.prototype.value = null;
+
+$root.uff.Node.ExtraFieldsEntry = class ExtraFieldsEntry {
+
+    constructor() {
+    }
+
+    static decode(reader, length) {
+        const message = new $root.uff.Node.ExtraFieldsEntry();
+        const end = reader.next(length);
+        while (reader.end(end)) {
+            const tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1:
+                    message.key = reader.string();
+                    break;
+                case 2:
+                    message.value = $root.uff.Data.decode(reader, reader.uint32());
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+            }
+        }
+        return message;
+    }
+
+    static decodeText(reader) {
+        const message = new $root.uff.Node.ExtraFieldsEntry();
+        reader.start();
+        while (!reader.end()) {
+            const tag = reader.tag();
+            switch (tag) {
+                case "key":
+                    message.key = reader.string();
+                    break;
+                case "value":
+                    message.value = $root.uff.Data.decodeText(reader, true);
+                    break;
+                default:
+                    reader.field(tag, message);
+                    break;
+            }
+        }
+        return message;
+    }
+};
+
+$root.uff.Node.ExtraFieldsEntry.prototype.key = "";
+$root.uff.Node.ExtraFieldsEntry.prototype.value = null;
+
+$root.uff.Data = class Data {
+
+    constructor() {
+    }
+
+    get type() {
+        $root.uff.Data.typeSet = $root.uff.Data.typeSet || new Set([ "s", "s_list", "d", "d_list", "b", "b_list", "i", "i_list", "blob", "ref", "dtype", "dtype_list", "dim_orders", "dim_orders_list"]);
+        return Object.keys(this).find((key) => $root.uff.Data.typeSet.has(key) && this[key] != null);
+    }
+
+    static decode(reader, length) {
+        const message = new $root.uff.Data();
+        const end = reader.next(length);
+        while (reader.end(end)) {
+            const tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1:
+                    message.s = reader.string();
+                    break;
+                case 2:
+                    message.s_list = $root.uff.ListString.decode(reader, reader.uint32());
+                    break;
+                case 3:
+                    message.d = reader.double();
+                    break;
+                case 4:
+                    message.d_list = $root.uff.ListDouble.decode(reader, reader.uint32());
+                    break;
+                case 5:
+                    message.b = reader.bool();
+                    break;
+                case 6:
+                    message.b_list = $root.uff.ListBool.decode(reader, reader.uint32());
+                    break;
+                case 7:
+                    message.i = reader.int64();
+                    break;
+                case 8:
+                    message.i_list = $root.uff.ListInt64.decode(reader, reader.uint32());
+                    break;
+                case 9:
+                    message.blob = reader.bytes();
+                    break;
+                case 100:
+                    message.ref = reader.string();
+                    break;
+                case 101:
+                    message.dtype = reader.int32();
+                    break;
+                case 102:
+                    message.dtype_list = $root.uff.ListDataType.decode(reader, reader.uint32());
+                    break;
+                case 103:
+                    message.dim_orders = $root.uff.DimensionOrders.decode(reader, reader.uint32());
+                    break;
+                case 104:
+                    message.dim_orders_list = $root.uff.ListDimensionOrders.decode(reader, reader.uint32());
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+            }
+        }
+        return message;
+    }
+
+    static decodeText(reader) {
+        const message = new $root.uff.Data();
+        reader.start();
+        while (!reader.end()) {
+            const tag = reader.tag();
+            switch (tag) {
+                case "s":
+                    message.s = reader.string();
+                    break;
+                case "s_list":
+                    message.s_list = $root.uff.ListString.decodeText(reader, true);
+                    break;
+                case "d":
+                    message.d = reader.float();
+                    break;
+                case "d_list":
+                    message.d_list = $root.uff.ListDouble.decodeText(reader, true);
+                    break;
+                case "b":
+                    message.b = reader.boolean();
+                    break;
+                case "b_list":
+                    message.b_list = $root.uff.ListBool.decodeText(reader, true);
+                    break;
+                case "i":
+                    message.i = reader.integer();
+                    break;
+                case "i_list":
+                    message.i_list = $root.uff.ListInt64.decodeText(reader, true);
+                    break;
+                case "blob":
+                    message.blob = reader.bytes();
+                    break;
+                case "ref":
+                    message.ref = reader.string();
+                    break;
+                case "dtype":
+                    message.dtype = reader.enum($root.uff.DataType);
+                    break;
+                case "dtype_list":
+                    message.dtype_list = $root.uff.ListDataType.decodeText(reader, true);
+                    break;
+                case "dim_orders":
+                    message.dim_orders = $root.uff.DimensionOrders.decodeText(reader, true);
+                    break;
+                case "dim_orders_list":
+                    message.dim_orders_list = $root.uff.ListDimensionOrders.decodeText(reader, true);
+                    break;
+                default:
+                    reader.field(tag, message);
+                    break;
+            }
+        }
+        return message;
+    }
+};
+
+$root.uff.DataType = {
+    "DT_INVALID": 0,
+    "DT_INT8": 65544,
+    "DT_INT16": 65552,
+    "DT_INT32": 65568,
+    "DT_INT64": 65600,
+    "DT_FLOAT16": 131088,
+    "DT_FLOAT32": 131104
+};
+
+$root.uff.OrderEnum = {
+    "OE_ZERO": 0,
+    "OE_SPECIAL": -1,
+    "OE_INCREMENT": 2147483647,
+    "OE_DECREMENT": -2147483648
+};
+
+$root.uff.DimensionOrders = class DimensionOrders {
+
+    constructor() {
+        this.orders = [];
+    }
+
+    static decode(reader, length) {
+        const message = new $root.uff.DimensionOrders();
+        const end = reader.next(length);
+        while (reader.end(end)) {
+            const tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1:
+                    message.orders.push($root.uff.DimensionOrders.OrdersEntry.decode(reader, reader.uint32()));
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+            }
+        }
+        return message;
+    }
+
+    static decodeText(reader) {
+        const message = new $root.uff.DimensionOrders();
+        reader.start();
+        while (!reader.end()) {
+            const tag = reader.tag();
+            switch (tag) {
+                case "orders":
+                    message.orders.push($root.uff.DimensionOrders.OrdersEntry.decodeText(reader, true));
+                    break;
+                default:
+                    reader.field(tag, message);
+                    break;
+            }
+        }
+        return message;
+    }
+};
+
+$root.uff.DimensionOrders.OrdersEntry = class OrdersEntry {
+
+    constructor() {
+    }
+
+    static decode(reader, length) {
+        const message = new $root.uff.DimensionOrders.OrdersEntry();
+        const end = reader.next(length);
+        while (reader.end(end)) {
+            const tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1:
+                    message.key = reader.int32();
+                    break;
+                case 2:
+                    message.value = $root.uff.ListInt64.decode(reader, reader.uint32());
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+            }
+        }
+        return message;
+    }
+
+    static decodeText(reader) {
+        const message = new $root.uff.DimensionOrders.OrdersEntry();
+        reader.start();
+        while (!reader.end()) {
+            const tag = reader.tag();
+            switch (tag) {
+                case "key":
+                    message.key = reader.enum($root.uff.OrderEnum);
+                    break;
+                case "value":
+                    message.value = $root.uff.ListInt64.decodeText(reader, true);
+                    break;
+                default:
+                    reader.field(tag, message);
+                    break;
+            }
+        }
+        return message;
+    }
+};
+
+$root.uff.DimensionOrders.OrdersEntry.prototype.key = 0;
+$root.uff.DimensionOrders.OrdersEntry.prototype.value = null;
+
+$root.uff.ListString = class ListString {
+
+    constructor() {
+        this.val = [];
+    }
+
+    static decode(reader, length) {
+        const message = new $root.uff.ListString();
+        const end = reader.next(length);
+        while (reader.end(end)) {
+            const tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1:
+                    message.val.push(reader.string());
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+            }
+        }
+        return message;
+    }
+
+    static decodeText(reader) {
+        const message = new $root.uff.ListString();
+        reader.start();
+        while (!reader.end()) {
+            const tag = reader.tag();
+            switch (tag) {
+                case "val":
+                    reader.array(message.val, () => reader.string());
+                    break;
+                default:
+                    reader.field(tag, message);
+                    break;
+            }
+        }
+        return message;
+    }
+};
+
+$root.uff.ListDouble = class ListDouble {
+
+    constructor() {
+        this.val = [];
+    }
+
+    static decode(reader, length) {
+        const message = new $root.uff.ListDouble();
+        const end = reader.next(length);
+        while (reader.end(end)) {
+            const tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1:
+                    message.val = reader.doubles(message.val, tag);
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+            }
+        }
+        return message;
+    }
+
+    static decodeText(reader) {
+        const message = new $root.uff.ListDouble();
+        reader.start();
+        while (!reader.end()) {
+            const tag = reader.tag();
+            switch (tag) {
+                case "val":
+                    reader.array(message.val, () => reader.float());
+                    break;
+                default:
+                    reader.field(tag, message);
+                    break;
+            }
+        }
+        return message;
+    }
+};
+
+$root.uff.ListBool = class ListBool {
+
+    constructor() {
+        this.val = [];
+    }
+
+    static decode(reader, length) {
+        const message = new $root.uff.ListBool();
+        const end = reader.next(length);
+        while (reader.end(end)) {
+            const tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1:
+                    message.val = reader.array(message.val, () => reader.bool(), tag);
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+            }
+        }
+        return message;
+    }
+
+    static decodeText(reader) {
+        const message = new $root.uff.ListBool();
+        reader.start();
+        while (!reader.end()) {
+            const tag = reader.tag();
+            switch (tag) {
+                case "val":
+                    reader.array(message.val, () => reader.boolean());
+                    break;
+                default:
+                    reader.field(tag, message);
+                    break;
+            }
+        }
+        return message;
+    }
+};
+
+$root.uff.ListInt64 = class ListInt64 {
+
+    constructor() {
+        this.val = [];
+    }
+
+    static decode(reader, length) {
+        const message = new $root.uff.ListInt64();
+        const end = reader.next(length);
+        while (reader.end(end)) {
+            const tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1:
+                    message.val = reader.array(message.val, () => reader.int64(), tag);
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+            }
+        }
+        return message;
+    }
+
+    static decodeText(reader) {
+        const message = new $root.uff.ListInt64();
+        reader.start();
+        while (!reader.end()) {
+            const tag = reader.tag();
+            switch (tag) {
+                case "val":
+                    reader.array(message.val, () => reader.integer());
+                    break;
+                default:
+                    reader.field(tag, message);
+                    break;
+            }
+        }
+        return message;
+    }
+};
+
+$root.uff.ListDataType = class ListDataType {
+
+    constructor() {
+        this.val = [];
+    }
+
+    static decode(reader, length) {
+        const message = new $root.uff.ListDataType();
+        const end = reader.next(length);
+        while (reader.end(end)) {
+            const tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1:
+                    message.val = reader.array(message.val, () => reader.int32(), tag);
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+            }
+        }
+        return message;
+    }
+
+    static decodeText(reader) {
+        const message = new $root.uff.ListDataType();
+        reader.start();
+        while (!reader.end()) {
+            const tag = reader.tag();
+            switch (tag) {
+                case "val":
+                    reader.array(message.val, () => reader.enum($root.uff.DataType));
+                    break;
+                default:
+                    reader.field(tag, message);
+                    break;
+            }
+        }
+        return message;
+    }
+};
+
+$root.uff.ListDimensionOrders = class ListDimensionOrders {
+
+    constructor() {
+        this.val = [];
+    }
+
+    static decode(reader, length) {
+        const message = new $root.uff.ListDimensionOrders();
+        const end = reader.next(length);
+        while (reader.end(end)) {
+            const tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1:
+                    message.val.push($root.uff.DimensionOrders.decode(reader, reader.uint32()));
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+            }
+        }
+        return message;
+    }
+
+    static decodeText(reader) {
+        const message = new $root.uff.ListDimensionOrders();
+        reader.start();
+        while (!reader.end()) {
+            const tag = reader.tag();
+            switch (tag) {
+                case "val":
+                    message.val.push($root.uff.DimensionOrders.decodeText(reader, true));
+                    break;
+                default:
+                    reader.field(tag, message);
+                    break;
+            }
+        }
+        return message;
+    }
+};

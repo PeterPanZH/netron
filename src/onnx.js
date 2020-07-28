@@ -49,13 +49,16 @@ onnx.ModelFactory = class {
             }
             return true;
         }
-        if (extension == 'pbtxt' || extension == 'prototxt') {
+        if (extension === 'pbtxt' || extension === 'prototxt' || extension === 'model') {
             if (identifier.endsWith('predict_net.pbtxt') || identifier.endsWith('predict_net.prototxt') ||
                 identifier.endsWith('init_net.pbtxt') || identifier.endsWith('init_net.prototxt')) {
                 return false;
             }
             const tags = context.tags('pbtxt');
-            if (tags.has('ir_version') || tags.has('graph')) {
+            if (tags.has('ir_version')) {
+                return true;
+            }
+            if (tags.has('graph') && extension !== 'model') {
                 return true;
             }
         }
@@ -250,6 +253,7 @@ onnx.Graph = class {
         this._outputs = [];
 
         if (graph) {
+
             this._name = graph.name || null;
             this._description = graph.doc_string || '';
 
@@ -293,10 +297,21 @@ onnx.Graph = class {
                 }
             }
 
+            const annotations = new Map();
+            for (const tensor_annotation of graph.quantization_annotation) {
+                const annotation = {};
+                for (const pair of tensor_annotation.quant_parameter_tensor_names) {
+                    annotation[pair.key] = pair.value;
+                }
+                annotations.set(tensor_annotation.tensor_name, annotation);
+            }
+
             const args = new Map();
             const arg = (id, type, description, initializer, imageFormat) => {
                 if (!args.has(id)) {
-                    args.set(id, new onnx.Argument(id, initializer ? initializer.type : type ? onnx.Tensor._formatType(type, imageFormat) : null, initializer, description));
+                    type = initializer ? initializer.type : type ? onnx.Utility.formatType(type, imageFormat) : null;
+                    const annotation = annotations.get(id);
+                    args.set(id, new onnx.Argument(id, type, initializer, annotation, description));
                 }
                 return args.get(id);
             };
@@ -418,13 +433,14 @@ onnx.Parameter = class {
 
 onnx.Argument = class {
 
-    constructor(name, type, initializer, description) {
+    constructor(name, type, initializer, annotation, description) {
         if (typeof name !== 'string') {
             throw new onnx.Error("Invalid argument identifier '" + JSON.stringify(name) + "'.");
         }
         this._name = name;
         this._type = type || null;
         this._initializer = initializer || null;
+        this._annotation = annotation;
         this._description = description || '';
     }
 
@@ -438,6 +454,13 @@ onnx.Argument = class {
 
     get description() {
         return this._description;
+    }
+
+    get quantization() {
+        if (this._annotation) {
+            return Object.keys(this._annotation).map((key) => key + ': ' + this._annotation[key]).join(', ');
+        }
+        return null;
     }
 
     get initializer() {
@@ -886,84 +909,12 @@ onnx.Tensor = class {
         }
         return indentation + value.toString();
     }
-
-    static _formatElementType(elementType) {
-        if (!onnx.Tensor._elementTypeMap) {
-            const map = {};
-            map[onnx.proto.TensorProto.DataType.UNDEFINED] = 'UNDEFINED';
-            map[onnx.proto.TensorProto.DataType.FLOAT] = 'float32';
-            map[onnx.proto.TensorProto.DataType.UINT8] = 'uint8';
-            map[onnx.proto.TensorProto.DataType.INT8] = 'int8';
-            map[onnx.proto.TensorProto.DataType.UINT16] = 'uint16';
-            map[onnx.proto.TensorProto.DataType.INT16] = 'int16';
-            map[onnx.proto.TensorProto.DataType.INT32] = 'int32';
-            map[onnx.proto.TensorProto.DataType.INT64] = 'int64';
-            map[onnx.proto.TensorProto.DataType.STRING] = 'string';
-            map[onnx.proto.TensorProto.DataType.BOOL] = 'bool';
-            map[onnx.proto.TensorProto.DataType.FLOAT16] = 'float16';
-            map[onnx.proto.TensorProto.DataType.DOUBLE] = 'float64';
-            map[onnx.proto.TensorProto.DataType.UINT32] = 'uint32';
-            map[onnx.proto.TensorProto.DataType.UINT64] = 'uint64';
-            map[onnx.proto.TensorProto.DataType.COMPLEX64] = 'complex64';
-            map[onnx.proto.TensorProto.DataType.COMPLEX128] = 'complex128';
-            map[onnx.proto.TensorProto.DataType.BFLOAT16] = 'bfloat16';
-            onnx.Tensor._elementTypeMap = map;
-        }
-        const name = onnx.Tensor._elementTypeMap[elementType];
-        if (name) {
-            return name;
-        }
-        return onnx.Tensor._elementTypeMap[onnx.proto.TensorProto.DataType.UNDEFINED];
-    }
-
-    static _formatType(type, imageFormat) {
-        if (!type) {
-            return null;
-        }
-        let denotation = '';
-        switch (type.denotation) {
-            case 'TENSOR':
-                denotation = 'Tensor';
-                break;
-            case 'IMAGE':
-                denotation = 'Image' + (imageFormat ? '(' + imageFormat.join(',') + ')' : '');
-                break;
-            case 'AUDIO':
-                denotation = 'Audio';
-                break;
-            case 'TEXT':
-                denotation = 'Text';
-                break;
-        }
-        switch (type.value) {
-            case 'tensor_type':
-            case 'sparse_tensor_type': {
-                let shape = [];
-                if (type.tensor_type.shape && type.tensor_type.shape.dim) {
-                    shape = type.tensor_type.shape.dim.map((dim) => {
-                        return dim.dim_param ? dim.dim_param : dim.dim_value;
-                    });
-                }
-                return new onnx.TensorType(type.tensor_type.elem_type, new onnx.TensorShape(shape), denotation);
-            }
-            case 'map_type': {
-                return new onnx.MapType(type.map_type.key_type, onnx.Tensor._formatType(type.map_type.value_type, imageFormat), denotation);
-            }
-            case 'sequence_type': {
-                return new onnx.SequenceType(onnx.Tensor._formatType(type.sequence_type.elem_type, imageFormat), denotation);
-            }
-            case 'opaque_type': {
-                return new onnx.OpaqueType(type.opaque_type.domain, type.opaque_type.name);
-            }
-        }
-        return null;
-    }
 };
 
 onnx.TensorType = class {
 
     constructor(dataType, shape, denotation) {
-        this._dataType = onnx.Tensor._formatElementType(dataType);
+        this._dataType = onnx.Utility.formatElementType(dataType);
         this._shape = shape;
         this._denotation = denotation || null;
     }
@@ -1026,7 +977,7 @@ onnx.SequenceType = class {
 onnx.MapType = class {
 
     constructor(keyType, valueType, denotation) {
-        this._keyType = onnx.Tensor._formatElementType(keyType);
+        this._keyType = onnx.Utility.formatElementType(keyType);
         this._valueType = valueType;
         this._denotation = denotation;
     }
@@ -1150,6 +1101,78 @@ onnx.Utility = class {
     static decodeText(value) {
         onnx.Utility._utf8Decoder = onnx.Utility._utf8Decoder || new TextDecoder('utf-8');
         return onnx.Utility._utf8Decoder.decode(value);
+    }
+
+    static formatElementType(elementType) {
+        if (!onnx.Utility._elementTypeMap) {
+            const map = {};
+            map[onnx.proto.TensorProto.DataType.UNDEFINED] = 'UNDEFINED';
+            map[onnx.proto.TensorProto.DataType.FLOAT] = 'float32';
+            map[onnx.proto.TensorProto.DataType.UINT8] = 'uint8';
+            map[onnx.proto.TensorProto.DataType.INT8] = 'int8';
+            map[onnx.proto.TensorProto.DataType.UINT16] = 'uint16';
+            map[onnx.proto.TensorProto.DataType.INT16] = 'int16';
+            map[onnx.proto.TensorProto.DataType.INT32] = 'int32';
+            map[onnx.proto.TensorProto.DataType.INT64] = 'int64';
+            map[onnx.proto.TensorProto.DataType.STRING] = 'string';
+            map[onnx.proto.TensorProto.DataType.BOOL] = 'bool';
+            map[onnx.proto.TensorProto.DataType.FLOAT16] = 'float16';
+            map[onnx.proto.TensorProto.DataType.DOUBLE] = 'float64';
+            map[onnx.proto.TensorProto.DataType.UINT32] = 'uint32';
+            map[onnx.proto.TensorProto.DataType.UINT64] = 'uint64';
+            map[onnx.proto.TensorProto.DataType.COMPLEX64] = 'complex64';
+            map[onnx.proto.TensorProto.DataType.COMPLEX128] = 'complex128';
+            map[onnx.proto.TensorProto.DataType.BFLOAT16] = 'bfloat16';
+            onnx.Utility._elementTypeMap = map;
+        }
+        const name = onnx.Utility._elementTypeMap[elementType];
+        if (name) {
+            return name;
+        }
+        return onnx.Utility._elementTypeMap[onnx.proto.TensorProto.DataType.UNDEFINED];
+    }
+
+    static formatType(type, imageFormat) {
+        if (!type) {
+            return null;
+        }
+        let denotation = '';
+        switch (type.denotation) {
+            case 'TENSOR':
+                denotation = 'Tensor';
+                break;
+            case 'IMAGE':
+                denotation = 'Image' + (imageFormat ? '(' + imageFormat.join(',') + ')' : '');
+                break;
+            case 'AUDIO':
+                denotation = 'Audio';
+                break;
+            case 'TEXT':
+                denotation = 'Text';
+                break;
+        }
+        switch (type.value) {
+            case 'tensor_type':
+            case 'sparse_tensor_type': {
+                let shape = [];
+                if (type.tensor_type.shape && type.tensor_type.shape.dim) {
+                    shape = type.tensor_type.shape.dim.map((dim) => {
+                        return dim.dim_param ? dim.dim_param : dim.dim_value;
+                    });
+                }
+                return new onnx.TensorType(type.tensor_type.elem_type, new onnx.TensorShape(shape), denotation);
+            }
+            case 'map_type': {
+                return new onnx.MapType(type.map_type.key_type, onnx.Utility.formatType(type.map_type.value_type, imageFormat), denotation);
+            }
+            case 'sequence_type': {
+                return new onnx.SequenceType(onnx.Utility.formatType(type.sequence_type.elem_type, imageFormat), denotation);
+            }
+            case 'opaque_type': {
+                return new onnx.OpaqueType(type.opaque_type.domain, type.opaque_type.name);
+            }
+        }
+        return null;
     }
 };
 

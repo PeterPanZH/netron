@@ -19,7 +19,7 @@ venv() {
 }
 
 bold() {
-    echo "$(tty -s && tput bold)$1$(tty -s && tput sgr0)"
+    echo "$(tty -s && tput bold)$1$(tty -s && tput sgr0)" 
 }
 
 clean() {

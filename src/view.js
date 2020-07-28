@@ -21,7 +21,6 @@ view.View = class {
             this._model = null;
             this._selection = [];
             this._sidebar = new sidebar.Sidebar(this._host);
-            this._host.start();
             this._showAttributes = false;
             this._showInitializers = true;
             this._showNames = false;
@@ -63,8 +62,9 @@ view.View = class {
                     this._updateZoom(this._gestureStartZoom * e.scale, e);
                 }, false);
             }
+            this._host.start();
         }).catch((err) => {
-            this.error(err.message, err);
+            this.error(err, null, null);
         });
     }
 
@@ -153,7 +153,7 @@ view.View = class {
         if (this._model && this._activeGraph) {
             this._updateGraph(this._model, this._activeGraph).catch((error) => {
                 if (error) {
-                    this.error('Graph update failed.', error);
+                    this.error(error, 'Graph update failed.', 'welcome');
                 }
             });
         }
@@ -286,13 +286,35 @@ view.View = class {
         }
     }
 
-    error(message, err) {
+    error(err, name, screen) {
         if (this._sidebar) {
             this._sidebar.close();
         }
         this._host.exception(err, false);
-        this._host.error(message, err.toString());
-        this.show('welcome');
+
+        const knowns = [
+            { name: 'Error', message: /^EACCES: permission denied/, url: 'https://github.com/lutzroeder/netron/issues/504' },
+            { name: 'Error loading Darknet model.', message: /^Cannot read property/, url: 'https://github.com/lutzroeder/netron/issues/539' },
+            { name: 'Error loading Keras model.', message: /^Invalid argument identifier/, url: 'https://github.com/lutzroeder/netron/issues/540' },
+            { name: 'Error loading Darknet model.', message: /^Invalid tensor shape/, url: 'https://github.com/lutzroeder/netron/issues/541' },
+            { name: 'Error loading PyTorch model.', message: /^File does not contain root module or state dictionary/, url: 'https://github.com/lutzroeder/netron/issues/543' },
+            { name: 'Error loading PyTorch model.', message: /^Module does not contain modules/, url: 'https://github.com/lutzroeder/netron/issues/544' },
+            { name: 'Error loading PyTorch model.', message: /^Failed to resolve module/, url: 'https://github.com/lutzroeder/netron/issues/545' },
+            { name: 'Error loading PyTorch model.', message: /^Unsupported function/, url: 'https://github.com/lutzroeder/netron/issues/546' },
+            { name: 'Error loading PyTorch model.', message: /^Unsupported uninitialized argument/, url: 'https://github.com/lutzroeder/netron/issues/547' },
+            { name: 'Error loading Keras model.', message: /^Unsupported data object header version/, url: 'https://github.com/lutzroeder/netron/issues/548' },
+            { name: 'Error loading ONNX model.', message: /^File format is not onnx\.ModelProto/, url: 'https://github.com/lutzroeder/netron/issues/549' },
+            { name: 'Error loading model.', message: /^Unsupported file content \(/, url: 'https://github.com/lutzroeder/netron/issues/550' },
+            { name: 'Error', message: /^EPERM: operation not permitted/, url: 'https://github.com/lutzroeder/netron/issues/551' }
+        ];
+        const known = knowns.find((known) => err.name === known.name && err.message.match(known.message));
+        const message = (name ? err.toString() : err.message) + (known ? '\n\nPlease provide information about this issue at ' + known.url + '.' : '');
+        name = name || err.name;
+        this._host.error(name, message);
+        this.show(screen !== undefined ? screen : 'welcome');
+        if (known) {
+            this._host.openURL(known.url);
+        }
     }
 
     accept(file) {
@@ -326,7 +348,7 @@ view.View = class {
                 this._timeout(200).then(() => {
                     return this._updateGraph(model, graph).catch((error) => {
                         if (error) {
-                            this.error('Graph update failed.', error);
+                            this.error(error, 'Graph update failed.', 'welcome');
                         }
                     });
                 });
@@ -390,7 +412,10 @@ view.View = class {
                 const graphOptions = {};
                 graphOptions.nodesep = 25;
                 graphOptions.ranksep = 20;
-                if (this._showHorizontal) {
+
+                const rotate = graph.nodes.every((node) => node.inputs.filter((input) => input.arguments.every((argument) => !argument.initializer)).length === 0 && node.outputs.length === 0);
+                const showHorizontal = rotate ? !this._showHorizontal : this._showHorizontal;
+                if (showHorizontal) {
                     graphOptions.rankdir = "LR";
                 }
 
@@ -589,10 +614,10 @@ view.View = class {
 
                     const nodeName = node.name;
                     if (nodeName) {
-                        g.setNode(nodeId, { label: element.format(graphElement), id: 'node-' + nodeName });
+                        g.setNode(nodeId, { label: element.format(graphElement), id: 'node-' + nodeName, class: 'graph-node' });
                     }
                     else {
-                        g.setNode(nodeId, { label: element.format(graphElement), id: 'node-' + id.toString() });
+                        g.setNode(nodeId, { label: element.format(graphElement), id: 'node-' + id.toString(), class: 'graph-node' });
                         id++;
                     }
 
@@ -739,7 +764,13 @@ view.View = class {
                     const graphRenderer = new grapher.Renderer(this._host.document, originElement);
                     graphRenderer.render(g);
 
-                    const inputElements = graphElement.getElementsByClassName('graph-input');
+                    const originElements = Array.from(graphElement.getElementsByClassName('graph-input') || []);
+                    if (originElements.length === 0) {
+                        const nodeElements = Array.from(graphElement.getElementsByClassName('graph-node') || []);
+                        if (nodeElements.length > 0) {
+                            originElements.push(nodeElements[0]);
+                        }
+                    }
 
                     switch (this._host.environment('zoom')) {
                         case 'scroll': {
@@ -758,10 +789,10 @@ view.View = class {
                             graphElement.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
                             graphElement.setAttribute('width', width);
                             graphElement.setAttribute('height', height);
-                            if (inputElements && inputElements.length > 0) {
+                            if (originElements && originElements.length > 0) {
                                 // Center view based on input elements
-                                for (let j = 0; j < inputElements.length; j++) {
-                                    inputElements[j].scrollIntoView({ behavior: 'instant' });
+                                for (let j = 0; j < originElements.length; j++) {
+                                    originElements[j].scrollIntoView({ behavior: 'instant' });
                                     break;
                                 }
                             }
@@ -772,12 +803,12 @@ view.View = class {
                         }
                         case 'd3': {
                             const svgSize = graphElement.getBoundingClientRect();
-                            if (inputElements && inputElements.length > 0) {
+                            if (originElements && originElements.length > 0) {
                                 // Center view based on input elements
                                 const xs = [];
                                 const ys = [];
-                                for (let i = 0; i < inputElements.length; i++) {
-                                    const inputTransform = inputElements[i].transform.baseVal.consolidate().matrix;
+                                for (let i = 0; i < originElements.length; i++) {
+                                    const inputTransform = originElements[i].transform.baseVal.consolidate().matrix;
                                     xs.push(inputTransform.e);
                                     ys.push(inputTransform.f);
                                 }
@@ -938,7 +969,7 @@ view.View = class {
                             this._host.export(file, blob);
                         }
                         catch (error) {
-                            this.error('Error saving NumPy tensor.', error);
+                            this.error(error, 'Error saving NumPy tensor.', null);
                         }
                     });
                 }).catch(() => {
@@ -1107,7 +1138,7 @@ class ArchiveContext {
             for (const entry of entries) {
                 if (entry.name.startsWith(rootFolder)) {
                     const name = entry.name.substring(rootFolder.length);
-                    if (identifier.length > 0 && identifier.indexOf('/') < 0) {
+                    if (name.length > 0 && name.indexOf('/') === -1) {
                         this._entries[name] = entry;
                     }
                 }
@@ -1148,7 +1179,7 @@ view.ModelFactoryService = class {
     constructor(host) {
         this._host = host;
         this._extensions = [];
-        this.register('./onnx', [ '.onnx', '.pb', '.pbtxt', '.prototxt' ]);
+        this.register('./onnx', [ '.onnx', '.pb', '.pbtxt', '.prototxt', '.model' ]);
         this.register('./mxnet', [ '.mar', '.model', '.json', '.params' ]);
         this.register('./keras', [ '.h5', '.hd5', '.hdf5', '.keras', '.json', '.model', '.pb', '.pth' ]);
         this.register('./coreml', [ '.mlmodel' ]);
@@ -1159,13 +1190,13 @@ view.ModelFactoryService = class {
         this.register('./tflite', [ '.tflite', '.lite', '.tfl', '.bin', '.pb', '.tmfile', '.h5', '.model', '.json' ]);
         this.register('./tf', [ '.pb', '.meta', '.pbtxt', '.prototxt', '.json', '.index', '.ckpt' ]);
         this.register('./mediapipe', [ '.pbtxt' ]);
-        this.register('./uff', [ '.uff', '.pb', '.trt', '.pbtxt', '.uff.txt' ]);
+        this.register('./uff', [ '.uff', '.pb', '.pbtxt', '.uff.txt', '.trt', '.engine' ]);
         this.register('./sklearn', [ '.pkl', '.pickle', '.joblib', '.model', '.meta', '.pb', '.pt', '.h5' ]);
         this.register('./cntk', [ '.model', '.cntk', '.cmf', '.dnn' ]);
-        this.register('./paddle', [ '.paddle', '__model__' ]);
-        this.register('./armnn', [ '.armnn' ]);
+        this.register('./paddle', [ '.paddle', '.pdmodel', '__model__' ]);
         this.register('./bigdl', [ '.model', '.bigdl' ]);
         this.register('./darknet', [ '.cfg', '.model' ]);
+        this.register('./armnn', [ '.armnn', '.json' ]);
         this.register('./mnn', ['.mnn']);
         this.register('./ncnn', [ '.param', '.bin', '.cfg.ncnn', '.weights.ncnn' ]);
         this.register('./tnn', [ '.tnnproto', '.tnnmodel' ]);
@@ -1190,7 +1221,7 @@ view.ModelFactoryService = class {
                 context = new ModelContext(context);
                 const identifier = context.identifier;
                 const extension = identifier.split('.').pop().toLowerCase();
-                const modules = this._filter(context);
+                const modules = this._filter(context).filter((module) => module && module.length > 0);
                 if (modules.length == 0) {
                     throw new ModelError("Unsupported file extension '." + extension + "'.");
                 }
@@ -1313,7 +1344,8 @@ view.ModelFactoryService = class {
 
         try {
             const folders = {};
-            for (const entry of archive.entries) {
+            const entries = archive.entries.filter((entry) => !entry.name.endsWith('/') && !entry.name.split('/').pop().startsWith('.')).slice();
+            for (const entry of entries) {
                 if (entry.name.indexOf('/') != -1) {
                     folders[entry.name.split('/').shift() + '/'] = true;
                 }
@@ -1327,10 +1359,10 @@ view.ModelFactoryService = class {
             let rootFolder = Object.keys(folders).length == 1 ? Object.keys(folders)[0] : '';
             rootFolder = rootFolder == '/' ? '' : rootFolder;
             let matches = [];
-            const entries = archive.entries.slice();
+            const queue = entries.slice(0);
             const nextEntry = () => {
-                if (entries.length > 0) {
-                    const entry = entries.shift();
+                if (queue.length > 0) {
+                    const entry = queue.shift();
                     if (entry.name.startsWith(rootFolder)) {
                         const identifier = entry.name.substring(rootFolder.length);
                         if (identifier.length > 0 && identifier.indexOf('/') < 0 && !identifier.startsWith('.')) {
@@ -1374,7 +1406,7 @@ view.ModelFactoryService = class {
                         return Promise.reject(new ArchiveError('Archive contains multiple model files.'));
                     }
                     const match = matches[0];
-                    return Promise.resolve(new ModelContext(new ArchiveContext(archive.entries, rootFolder, match.name, match.data)));
+                    return Promise.resolve(new ModelContext(new ArchiveContext(entries, rootFolder, match.name, match.data)));
                 }
             };
             return nextEntry();
@@ -1385,9 +1417,11 @@ view.ModelFactoryService = class {
     }
 
     accept(identifier) {
+        const extension = identifier.split('.').pop().toLowerCase();
         identifier = identifier.toLowerCase();
-        for (const extension of this._extensions) {
-            if (identifier.endsWith(extension.extension)) {
+        for (const entry of this._extensions) {
+            if (identifier.endsWith(entry.extension)) {
+                this._host.event('File', 'Accept', extension, 1);
                 return true;
             }
         }
@@ -1395,8 +1429,10 @@ view.ModelFactoryService = class {
             identifier.endsWith('.tar') ||
             identifier.endsWith('.tar.gz') ||
             identifier.endsWith('.tgz')) {
+            this._host.event('File', 'Accept', extension, 1);
             return true;
         }
+        this._host.event('File', 'Reject', extension, 1);
         return false;
     }
 
@@ -1420,9 +1456,12 @@ view.ModelFactoryService = class {
             { name: 'HTML markup', value: /^\s*<!DOCTYPE HTML>/ },
             { name: 'Unity metadata', value: /^fileFormatVersion:/ },
             { name: 'Vulkan SwiftShader ICD manifest', value: /^{\s*"file_format_version":\s*"1.0.0"\s*,\s*"ICD":/ },
-            { name: 'StringIntLabelMapProto data', value: /^item\s*{\r?\n\s*id:/ },
-            { name: 'StringIntLabelMapProto data', value: /^item\s*{\r?\n\s*name:/ },
-            { name: 'Python source code', value: /^\s*import sys, types, os;/ }
+            { name: 'StringIntLabelMapProto data', value: /^(#.*\n)*item\s*{\r?\n\s*id:/ },
+            { name: 'StringIntLabelMapProto data', value: /^(#.*\n)*item\s*{\r?\n\s*name:/ },
+            { name: 'ImageNet LabelMap data', value: /^(#.*\n)*entry\s*{\r?\n\s*target_class/ },
+            { name: 'Python source code', value: /^\s*import sys, types, os;/ },
+            { name: 'undocumented TensorRT engine data', value: /^ptrt/ },
+            { name: 'TSD header', value: /^%TSD-Header-###%/ },
         ];
         const text = new TextDecoder().decode(buffer.subarray(0, Math.min(1024, buffer.length)));
         for (const item of list) {

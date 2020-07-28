@@ -11,14 +11,28 @@
     "target": "ssd_mobilenet_v3_small_coco_2019_08_14_q8.armnn",
     "source": "https://github.com/lutzroeder/netron/files/3839429/samples.zip[ssd_mobilenet_v3_small_coco_2019_08_14_q8.armnn]",
     "format": "Arm NN",
-    "link":   "https://github.com/ARM-software/armnn"
+    "link":   "https://github.com/lutzroeder/netron/issues/515"
+  },
+  {
+    "type":   "armnn",
+    "target": "ssd_mobilenet_v3_small_coco_2019_08_14_q8.json",
+    "source": "https://github.com/lutzroeder/netron/files/4945145/ssd_mobilenet_v3_small_coco_2019_08_14_q8.zip[ssd_mobilenet_v3_small_coco_2019_08_14_q8.json]",
+    "format": "Arm NN",
+    "link":   "https://github.com/lutzroeder/netron/issues/515"
   },
   {
     "type":   "armnn",
     "target": "ssd_mobilenet_v3_small_coco_2019_08_14_q16.armnn",
     "source": "https://github.com/lutzroeder/netron/files/3839429/samples.zip[ssd_mobilenet_v3_small_coco_2019_08_14_q16.armnn]",
     "format": "Arm NN",
-    "link":   "https://github.com/ARM-software/armnn"
+    "link":   "https://github.com/lutzroeder/netron/issues/515"
+  },
+  {
+    "type":   "armnn",
+    "target": "simple_network.armnn",
+    "source": "https://github.com/lutzroeder/netron/files/4951689/simple_network.zip[simple_network.armnn]",
+    "format": "Arm NN",
+    "link":   "https://github.com/lutzroeder/netron/issues/515"
   },
   {
     "type":   "barracuda",
@@ -110,6 +124,13 @@
     "source": "https://raw.githubusercontent.com/natanielruiz/net-archive/master/salient-object-alexnet/deploy.prototxt",
     "format": "Caffe v1",
     "link":   "https://github.com/natanielruiz/net-archive/tree/master/salient-object-alexnet"
+  },
+  {
+    "type":   "caffe",
+    "target": "autocolorize.prototxt",
+    "source": "https://github.com/lutzroeder/netron/files/4923194/autocolorize.zip[autocolorize.prototxt]",
+    "format": "Caffe v2",
+    "link":   "https://github.com/lutzroeder/netron/issues/276"
   },
   {
     "type":   "caffe",
@@ -501,7 +522,7 @@
     "source": "https://raw.githubusercontent.com/cwlacewe/netscope/master/presets/resnet-152.prototxt",
     "format": "Caffe v2",
     "link":   "https://github.com/cwlacewe/netscope"
-  },
+  },  
   {
     "type":   "caffe",
     "target": "s2s_vgg_pstream_allvocab_fac2_iter_16000.caffemodel",
@@ -1711,6 +1732,20 @@
   },
   {
     "type":   "darknet",
+    "target": "netron_issue_539.cfg",
+    "source": "https://github.com/lutzroeder/netron/files/4968179/netron_issue_539.zip[netron_issue_539.cfg]",
+    "format": "Darknet",
+    "link":   "https://github.com/lutzroeder/netron/issues/539"
+  },
+  {
+    "type":   "darknet",
+    "target": "netron_issue_541.cfg",
+    "source": "https://github.com/lutzroeder/netron/files/4968181/netron_issue_541.zip[netron_issue_541.cfg]",
+    "format": "Darknet",
+    "link":   "https://github.com/lutzroeder/netron/issues/541"
+  },
+  {
+    "type":   "darknet",
     "target": "resnet18.cfg,resnet18.weights",
     "source": "https://raw.githubusercontent.com/pjreddie/darknet/master/cfg/resnet18.cfg,https://pjreddie.com/media/files/resnet18.weights",
     "format": "Darknet",
@@ -1786,6 +1821,16 @@
     "format": "Darknet",
     "link":   "https://github.com/lutzroeder/netron/issues/277"
   },
+  {
+    "type":   "darknet",
+    "target": "yolov4-tiny.cfg,yolov4-tiny.weights",
+    "source": "https://raw.githubusercontent.com/AlexeyAB/darknet/master/cfg/yolov4-tiny.cfg,https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v4_pre/yolov4-tiny.weights",
+    "format": "Darknet",
+    "link":   "https://github.com/lutzroeder/netron/issues/531"
+  },
+
+
+
   {
     "type":   "darknet",
     "target": "yolo9000.cfg",
@@ -2067,6 +2112,13 @@
     "source": "https://github.com/lutzroeder/netron/files/4269953/netron_issue_435.zip[netron_issue_435.h5]",
     "format": "Keras v2.2.4",
     "link":   "https://github.com/lutzroeder/netron/issues/435"
+  },
+  {
+    "type":   "keras",
+    "target": "netron_issue_553.h5",
+    "source": "https://github.com/lutzroeder/netron/files/4979486/netron_issue_553.zip[netron_issue_553.h5]",
+    "format": "Keras v2.2.4-tf",
+    "link":   "https://github.com/lutzroeder/netron/issues/553"
   },
   {
     "type":   "keras",
@@ -2818,6 +2870,13 @@
   },
   {
     "type":   "onnx",
+    "target": "end2end_tfc_w1a1_oqnt_streamlined.onnx",
+    "source": "https://github.com/lutzroeder/netron/files/4885362/end2end_tfc_w1a1_oqnt_streamlined.zip[end2end_tfc_w1a1_oqnt_streamlined.onnx]",
+    "format": "ONNX v4",
+    "link":   "https://github.com/lutzroeder/netron/issues/532"
+  },
+  {
+    "type":   "onnx",
     "target": "Exermote.onnx",
     "source": "https://github.com/lutzroeder/netron/files/2592478/Exermote.onnx.zip[Exermote.onnx]",
     "format": "ONNX v3",
@@ -2840,6 +2899,13 @@
     "target": "FastStyleNet.onnx",
     "source": "https://raw.githubusercontent.com/tkat0/chainer-nnvm-example/master/models/chainer-fast-neuralstyle/FastStyleNet.onnx",
     "format": "ONNX v1", "producer": "Chainer 3.2.0"
+  },
+  {
+    "type":   "onnx",
+    "target": "FCLayer_graph.onnx",
+    "source": "https://raw.githubusercontent.com/Xilinx/finn/master/notebooks/FCLayer_graph.onnx",
+    "format": "ONNX v6",
+    "link":   "https://github.com/Xilinx/finn/tree/master/notebooks"
   },
   {
     "type":   "onnx",
@@ -3616,6 +3682,13 @@
   },
   {
     "type":   "paddle",
+    "target": "recognize_digits_multilayer_perceptron_model.zip",
+    "source": "https://github.com/lutzroeder/netron/files/4985730/recognize_digits_multilayer_perceptron_model.zip",
+    "format": "PaddlePaddle",
+    "link":   "https://github.com/lutzroeder/netron/issues/552"
+  },
+  {
+    "type":   "paddle",
     "target": "resnet50_int8_model.tar.gz",
     "source": "http://paddle-inference-dist.bj.bcebos.com/int8/resnet50_int8_model.tar.gz",
     "format": "PaddlePaddle",
@@ -3887,13 +3960,6 @@
     "source": "https://github.com/lutzroeder/netron/files/4111581/mobilenet_quantization_scripted_quantized.pth.zip[mobilenet_quantization_scripted_quantized.pth]",
     "format": "TorchScript v1.3",
     "link":   "https://github.com/lutzroeder/netron/issues/421"
-  },
-  {
-    "type":   "pytorch",
-    "target": "mobilenet_quantized_scripted_925.pt",
-    "source": "https://raw.githubusercontent.com/pytorch/android-demo-app/master/PyTorchDemoApp/app/src/main/assets/mobilenet_quantized_scripted_925.pt",
-    "format": "TorchScript v1.3",
-    "link":   "https://github.com/pytorch/android-demo-app"
   },
   {
     "type":   "pytorch",
@@ -4274,6 +4340,13 @@
   },
   {
     "type":   "pytorch",
+    "target": "valid-bert-base-uncased.pt",
+    "source": "https://github.com/lutzroeder/netron/files/4977150/valid-bert-base-uncased.zip[valid-bert-base-uncased.pt]",
+    "format": "PyTorch v0.1.10",
+    "link":   "https://github.com/lutzroeder/netron/issues/133"
+  },
+  {
+    "type":   "pytorch",
     "target": "vgg-cifar10.pth.tar",
     "source": "http://www.cs.unc.edu/~cyfu/cifar10/model_best.pth.tar",
     "format": "PyTorch v0.1.10",
@@ -4597,13 +4670,6 @@
   },
   {
     "type":   "tf",
-    "target": "mnist_model.pbtxt",
-    "source": "https://raw.githubusercontent.com/ShauralP/MobileML/master/SimpleMNIST/mnist_model.pbtxt",
-    "format": "TensorFlow Graph",
-    "link":   "https://github.com/ShauralP/MobileML"
-  },
-  {
-    "type":   "tf",
     "target": "faster_rcnn_inception_resnet_v2_atrous_oid_2018_01_28_frozen_inference.pb",
     "source": "http://download.tensorflow.org/models/object_detection/faster_rcnn_inception_resnet_v2_atrous_oid_2018_01_28.tar.gz[faster_rcnn_inception_resnet_v2_atrous_oid_2018_01_28/frozen_inference_graph.pb]",
     "format": "TensorFlow Graph",
@@ -4662,6 +4728,12 @@
   },
   {
     "type":   "tf",
+    "target": "imagenet_2012_challenge_label_map_proto.pbtxt",
+    "source": "https://raw.githubusercontent.com/dmlc/web-data/master/tensorflow/models/InceptionV1/imagenet_2012_challenge_label_map_proto.pbtxt",
+    "error":  "Invalid file content. File contains ImageNet LabelMap data."
+  },
+  {
+    "type":   "tf",
     "target": "inception_v1_2016_08_28_frozen.pb",
     "source": "https://storage.googleapis.com/download.tensorflow.org/models/inception_resnet_v2_2016_08_30_frozen.pb.tar.gz[inception_resnet_v2_2016_08_30_frozen.pb]",
     "format": "TensorFlow Graph",
@@ -4714,6 +4786,13 @@
     "source": "http://download.tensorflow.org/models/object_detection/mask_rcnn_resnet50_atrous_coco_2018_01_28.tar.gz[mask_rcnn_resnet50_atrous_coco_2018_01_28/model.ckpt.meta]",
     "format": "TensorFlow MetaGraph",
     "action": "skip-render"
+  },
+  {
+    "type":   "tf",
+    "target": "mnist_model.pbtxt",
+    "source": "https://raw.githubusercontent.com/ShauralP/MobileML/master/SimpleMNIST/mnist_model.pbtxt",
+    "format": "TensorFlow Graph",
+    "link":   "https://github.com/ShauralP/MobileML"
   },
   {
     "type":   "tf",
@@ -4982,6 +5061,12 @@
     "source": "https://github.com/lutzroeder/netron/files/3170424/air-time-model.json.zip[air-time-model.json]",
     "format": "TensorFlow.js layers-model", "producer": "TensorFlow.js tfjs-layers v1.0.4",
     "link":   "https://github.com/lutzroeder/netron/issues/270"
+  },
+  {
+    "type":   "tfjs",
+    "target": "age_gender_model/age_gender_model-weights_manifest.json,age_gender_model/age_gender_model-shard1",
+    "source": "https://raw.githubusercontent.com/justadudewhohacks/face-api.js-models/master/age_gender_model/age_gender_model-weights_manifest.json,https://raw.githubusercontent.com/justadudewhohacks/face-api.js-models/master/age_gender_model/age_gender_model-shard1",
+    "format": "TensorFlow.js Weights"
   },
   {
     "type":   "tfjs",

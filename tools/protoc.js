@@ -172,7 +172,7 @@ protoc.Root = class extends protoc.Namespace {
                 return;
             }
             try {
-                this._processFile(paths, file, fs.readFileSync(file, 'utf-8'));
+                this._parseFile(paths, file);
             }
             catch (err) {
                 if (!weak) {
@@ -182,7 +182,8 @@ protoc.Root = class extends protoc.Namespace {
         }
     }
 
-    _processFile(paths, file, source) {
+    _parseFile(paths, file) {
+        const source = fs.readFileSync(file, 'utf-8');
         const parser = new protoc.Parser(source, file, this);
         const parsed = parser.parse();
         for (const item of parsed.imports) {
@@ -317,8 +318,9 @@ protoc.Enum = class extends protoc.Type {
 
 protoc.PrimitiveType = class extends protoc.Type {
 
-    constructor(name, long, mapKey, packed, defaultValue) {
+    constructor(name, text, long, mapKey, packed, defaultValue) {
         super(null, name);
+        this.text = text;
         this.long = long;
         this.mapKey = mapKey;
         this.packed = packed;
@@ -329,21 +331,21 @@ protoc.PrimitiveType = class extends protoc.Type {
         if (!this._map) {
             this._map = new Map();
             const register = (type) => this._map.set(type.name, type);
-            register(new protoc.PrimitiveType('double', false, false, true, 0));
-            register(new protoc.PrimitiveType('float', false, false, true, 0));
-            register(new protoc.PrimitiveType('int32', false, true, true, 0));
-            register(new protoc.PrimitiveType('uint32', false, true, true, 0));
-            register(new protoc.PrimitiveType('sint32', false, true, true, 0));
-            register(new protoc.PrimitiveType('fixed32', false, true, true, 0));
-            register(new protoc.PrimitiveType('sfixed32', false, true, true, 0));
-            register(new protoc.PrimitiveType('int64', true, true, true, 0));
-            register(new protoc.PrimitiveType('uint64', true, true, true, 0));
-            register(new protoc.PrimitiveType('sint64', true, true, true, 0));
-            register(new protoc.PrimitiveType('fixed64', true, true, true, 0));
-            register(new protoc.PrimitiveType('sfixed64', true, true, true, 0));
-            register(new protoc.PrimitiveType('bool', false, true, true, false));
-            register(new protoc.PrimitiveType('string', false, true, false, ''));
-            register(new protoc.PrimitiveType('bytes', false, true, false, []));
+            register(new protoc.PrimitiveType('double', 'float', false, false, true, 0));
+            register(new protoc.PrimitiveType('float', 'float', false, false, true, 0));
+            register(new protoc.PrimitiveType('int32', 'integer', false, true, true, 0));
+            register(new protoc.PrimitiveType('uint32', 'integer', false, true, true, 0));
+            register(new protoc.PrimitiveType('sint32', 'integer', false, true, true, 0));
+            register(new protoc.PrimitiveType('fixed32', 'integer', false, true, true, 0));
+            register(new protoc.PrimitiveType('sfixed32', 'integer', false, true, true, 0));
+            register(new protoc.PrimitiveType('int64', 'integer', true, true, true, 0));
+            register(new protoc.PrimitiveType('uint64', 'integer', true, true, true, 0));
+            register(new protoc.PrimitiveType('sint64', 'integer', true, true, true, 0));
+            register(new protoc.PrimitiveType('fixed64', 'integer', true, true, true, 0));
+            register(new protoc.PrimitiveType('sfixed64', 'integer', true, true, true, 0));
+            register(new protoc.PrimitiveType('bool', 'boolean', false, true, true, false));
+            register(new protoc.PrimitiveType('string', 'string', false, true, false, ''));
+            register(new protoc.PrimitiveType('bytes', 'bytes', false, true, false, []));
         }
         return this._map.get(name);
     }
@@ -430,186 +432,15 @@ protoc.MapField = class extends protoc.Field {
 
     constructor(parent, name, id, keyType, type) {
         super(parent, name, id, type);
-        this.keyType = keyType;
-    }
-};
-
-protoc.Tokenizer = class {
-
-    constructor(source, file) {
-        this._source = source.toString();
-        this._file = file;
-        this._offset = 0;
-        this._length = source.length;
-        this._line = 1;
-        this._stack = [];
-        this._delimiter = null;
-    }
-
-    get file() {
-        return this._file;
-    }
-
-    get line() {
-        return this._line;
-    }
-
-    next() {
-        if (this._stack.length > 0) {
-            return this._stack.shift();
-        }
-        if (this._delimiter) {
-            return this._readString();
-        }
-
-        let repeat;
-        let prev;
-        let curr;
-        do {
-            if (this._offset === this._length) {
-                return null;
-            }
-            repeat = false;
-            while (/\s/.test(curr = this._get(this._offset))) {
-                if (curr === '\n') {
-                    this._line++;
-                }
-                if (++this._offset === this._length) {
-                    return null;
-                }
-            }
-
-            if (this._get(this._offset) === '/') {
-                if (++this._offset === this._length) {
-                    throw this._readError('Invalid comment');
-                }
-                if (this._get(this._offset) === '/') {
-                    while (this._get(++this._offset) !== '\n') {
-                        if (this._offset === this._length) {
-                            return null;
-                        }
-                    }
-                    this._offset++;
-                    this._line++;
-                    repeat = true;
-                }
-                else if ((curr = this._get(this._offset)) === '*') {
-                    do {
-                        if (curr === '\n') {
-                            this._line++;
-                        }
-                        if (++this._offset === this._length) {
-                            throw this._readError('Invalid comment');
-                        }
-                        prev = curr;
-                        curr = this._get(this._offset);
-                    } while (prev !== '*' || curr !== '/');
-                    this._offset++;
-                    repeat = true;
-                }
-                else {
-                    return '/';
-                }
-            }
-        }
-        while (repeat);
-
-        let end = this._offset;
-        const delimRe = /[\s{}=;:[\],'"()<>]/g;
-        delimRe.lastIndex = 0;
-        const delim = delimRe.test(this._get(end++));
-        if (!delim) {
-            while (end < this._length && !delimRe.test(this._get(end))) {
-                end++;
-            }
-        }
-        const token = this._source.substring(this._offset, this._offset = end);
-        if (token === '"' || token === "'") {
-            this._delimiter = token;
-        }
-        return token;
-    }
-
-    peek() {
-        if (!this._stack.length) {
-            const token = this.next();
-            if (token === null) {
-                return null;
-            }
-            this.push(token);
-        }
-        return this._stack[0];
-    }
-
-    push(token) {
-        this._stack.push(token);
-    }
-
-    expect(value) {
-        const token = this.peek();
-        if (token !== value) {
-            throw this._readError("Unexpected '" + token + "' instead of '" + value + "'");
-        }
-        this.next();
-    }
-
-    eat(value) {
-        const token = this.peek();
-        if (token === value) {
-            this.next();
-            return true;
-        }
-        return false;
-    }
-
-    _get(pos) {
-        return this._source.charAt(pos);
-    }
-
-    static _unescape(str) {
-        return str.replace(/\\(.?)/g, function($0, $1) {
-            switch ($1) {
-                case '\\':
-                case '':
-                    return $1;
-                case '0':
-                    return '\0';
-                case 'r':
-                    return '\r';
-                case 'n':
-                    return '\n';
-                case 't':
-                    return '\t';
-                default:
-                    return '';
-            }
-        });
-    }
-
-    _readString() {
-        const re = this._delimiter === "'" ? /(?:'([^'\\]*(?:\\.[^'\\]*)*)')/g : /(?:"([^"\\]*(?:\\.[^"\\]*)*)")/g;
-        re.lastIndex = this._offset - 1;
-        const match = re.exec(this._source);
-        if (!match) {
-            throw this._readError('Invalid string');
-        }
-        this._offset = re.lastIndex;
-        this.push(this._delimiter);
-        this._delimiter = null;
-        return protoc.Tokenizer._unescape(match[1]);
-    }
-
-    _readError(message) {
-        const location = ' at ' + this._file + ':' + this._line.toString();
-        return new protoc.Error(message + location + '.');
+        this.keyType = protoc.PrimitiveType.get(keyType);
     }
 };
 
 protoc.Parser = class {
 
-    constructor(source, file, root) {
+    constructor(text, file, root) {
         this._context = root;
-        this._tokenizer = new protoc.Tokenizer(source, file);
+        this._tokenizer = new protoc.Parser.Tokenizer(text, file);
         this._head = true;
         this._imports = [];
         this._weakImports = [];
@@ -980,25 +811,25 @@ protoc.Parser = class {
     }
 
     _parseOptionValue(parent, name) {
-        if (this._tokenizer.eat("{")) {
-            while (!this._tokenizer.eat("}")) {
+        if (this._tokenizer.eat('{')) {
+            while (!this._tokenizer.eat('}')) {
                 const token = this._tokenizer.next();
                 if (!protoc.Parser._isName(token)) {
-                    throw this._parseError(token, "name");
+                    throw this._parseError(token, 'name');
                 }
-                if (this._tokenizer.peek() === "{") {
-                    this._parseOptionValue(parent, name + "." + token);
+                if (this._tokenizer.peek() === '{') {
+                    this._parseOptionValue(parent, name + '.' + token);
                 }
                 else {
-                    this._tokenizer.expect(":");
-                    if (this._tokenizer.peek() === "{") {
-                        this._parseOptionValue(parent, name + "." + token);
+                    this._tokenizer.expect(':');
+                    if (this._tokenizer.peek() === '{') {
+                        this._parseOptionValue(parent, name + '.' + token);
                     }
                     else {
-                        parent.options.set(name + "." + token, this._readValue());
+                        parent.options.set(name + '.' + token, this._readValue());
                     }
                 }
-                this._tokenizer.eat(",");
+                this._tokenizer.eat(',');
             }
         }
         else {
@@ -1007,12 +838,12 @@ protoc.Parser = class {
     }
 
     _parseInlineOptions(parent) {
-        if (this._tokenizer.eat("[")) {
+        if (this._tokenizer.eat('[')) {
             do {
-                this._parseOption(parent, "option");
+                this._parseOption(parent, 'option');
             }
-            while (this._tokenizer.eat(","));
-            this._tokenizer.expect("]");
+            while (this._tokenizer.eat(','));
+            this._tokenizer.expect(']');
         }
         return parent;
     }
@@ -1116,23 +947,190 @@ protoc.Parser = class {
     }
 };
 
+protoc.Parser.Tokenizer = class {
+
+    constructor(text, file) {
+        this._text = text;
+        this._file = file;
+        this._position = 0;
+        this._length = text.length;
+        this._line = 1;
+        this._stack = [];
+        this._delimiter = null;
+    }
+
+    get file() {
+        return this._file;
+    }
+
+    get line() {
+        return this._line;
+    }
+
+    next() {
+        if (this._stack.length > 0) {
+            return this._stack.shift();
+        }
+        if (this._delimiter) {
+            return this._readString();
+        }
+
+        let repeat;
+        let prev;
+        let curr;
+        do {
+            if (this._position === this._length) {
+                return null;
+            }
+            repeat = false;
+            while (/\s/.test(curr = this._get(this._position))) {
+                if (curr === '\n') {
+                    this._line++;
+                }
+                this._position++;
+                if (this._position === this._length) {
+                    return null;
+                }
+            }
+
+            if (this._get(this._position) === '/') {
+                this._position++;
+                if (this._position === this._length) {
+                    throw this._readError('Invalid comment');
+                }
+                if (this._get(this._position) === '/') {
+                    while (this._get(++this._position) !== '\n') {
+                        if (this._position === this._length) {
+                            return null;
+                        }
+                    }
+                    this._position++;
+                    this._line++;
+                    repeat = true;
+                }
+                else if ((curr = this._get(this._position)) === '*') {
+                    do {
+                        if (curr === '\n') {
+                            this._line++;
+                        }
+                        this._position++;
+                        if (this._position === this._length) {
+                            throw this._readError('Invalid comment');
+                        }
+                        prev = curr;
+                        curr = this._get(this._position);
+                    } while (prev !== '*' || curr !== '/');
+                    this._position++;
+                    repeat = true;
+                }
+                else {
+                    return '/';
+                }
+            }
+        }
+        while (repeat);
+
+        let end = this._position;
+        const delimRe = /[\s{}=;:[\],'"()<>]/g;
+        delimRe.lastIndex = 0;
+        const delim = delimRe.test(this._get(end++));
+        if (!delim) {
+            while (end < this._length && !delimRe.test(this._get(end))) {
+                end++;
+            }
+        }
+        const position = this._position;
+        this._position = end;
+        const token = this._text.substring(position, this._position);
+        if (token === '"' || token === "'") {
+            this._delimiter = token;
+        }
+        return token;
+    }
+
+    peek() {
+        if (!this._stack.length) {
+            const token = this.next();
+            if (token === null) {
+                return null;
+            }
+            this.push(token);
+        }
+        return this._stack[0];
+    }
+
+    push(value) {
+        this._stack.push(value);
+    }
+
+    expect(value) {
+        const token = this.peek();
+        if (token !== value) {
+            throw this._readError("Unexpected '" + token + "' instead of '" + value + "'");
+        }
+        this.next();
+    }
+
+    eat(value) {
+        const token = this.peek();
+        if (token === value) {
+            this.next();
+            return true;
+        }
+        return false;
+    }
+
+    _get(pos) {
+        return this._text.charAt(pos);
+    }
+
+    static _unescape(str) {
+        return str.replace(/\\(.?)/g, function($0, $1) {
+            switch ($1) {
+                case '\\':
+                case '':
+                    return $1;
+                case '0':
+                    return '\0';
+                case 'r':
+                    return '\r';
+                case 'n':
+                    return '\n';
+                case 't':
+                    return '\t';
+                default:
+                    return '';
+            }
+        });
+    }
+
+    _readString() {
+        const re = this._delimiter === "'" ? /(?:'([^'\\]*(?:\\.[^'\\]*)*)')/g : /(?:"([^"\\]*(?:\\.[^"\\]*)*)")/g;
+        re.lastIndex = this._position - 1;
+        const match = re.exec(this._text);
+        if (!match) {
+            throw this._readError('Invalid string');
+        }
+        this._position = re.lastIndex;
+        this.push(this._delimiter);
+        this._delimiter = null;
+        return protoc.Parser.Tokenizer._unescape(match[1]);
+    }
+
+    _readError(message) {
+        const location = ' at ' + this._file + ':' + this._line.toString();
+        return new protoc.Error(message + location + '.');
+    }
+};
+
 protoc.Generator = class {
 
     constructor(root, text) {
         this._root = root;
         this._text = text;
         this._builder = new protoc.Generator.StringBuilder();
-        /* eslint-disable indent */
-        this._builder.add('(function($protobuf) {');
-        this._builder.indent();
-            this._builder.add('"use strict";');
-            this._builder.add('');
-            this._builder.add("const $root = $protobuf.get('" + this._root.alias + "');");
-            this._buildNamespace(null, this._root);
-            this._builder.add('return $root;');
-        this._builder.outdent();
-        this._builder.add('})(protobuf);');
-        /* eslint-enable indent */
+        this._builder.add("var $root = protobuf.get('" + this._root.alias + "');");
+        this._buildContent(this._root);
         this._content = this._builder.toString();
     }
 
@@ -1140,84 +1138,61 @@ protoc.Generator = class {
         return this._content;
     }
 
-    _buildNamespace(ref, namespace) {
-        if (namespace.name !== '') {
-            this._builder.add('');
-            this._builder.add(protoc.Generator._escapeName(ref) + '.' + protoc.Generator._escapeName(namespace.name) + ' = (function() {');
-            this._builder.indent();
-        }
-        if (namespace instanceof protoc.Type) {
-            this._buildType(undefined, namespace);
-        }
-        else if (namespace.name !== '') {
-            this._builder.add('');
-            this._builder.add('const ' + protoc.Generator._escapeName(namespace.name) + ' = {};');
-        }
+    _buildContent(namespace) {
         for (const child of namespace.children.values()) {
-            if (child instanceof protoc.Enum) {
-                this._buildEnum(namespace.name, child);
-            }
-            else if (child instanceof protoc.Namespace) {
-                this._buildNamespace(namespace.name, child);
-            }
-        }
-        if (namespace.name !== '') {
             this._builder.add('');
-            this._builder.add('return ' + protoc.Generator._escapeName(namespace.name) + ';');
-            this._builder.outdent();
-            this._builder.add('})();');
-        }
-    }
-
-    _buildFunction(type, functionName, body) {
-        if (functionName === type.name) {
-            body();
-            this._builder.add('}');
-        }
-        else {
-            this._builder.add(protoc.Generator._escapeName(type.name) + "." + protoc.Generator._escapeName(functionName) + ' = ', false);
-            body();
-            this._builder.add('};');
-        }
-    }
-
-    _buildType(ref, type) {
-        this._builder.add('');
-        this._buildConstructor(type);
-        let first = true;
-        for (const field of type.fields.values()) {
-            const fieldName = protoc.Generator._propertyReference(field.name);
-            if (first) {
-                this._builder.add('');
-                first = false;
+            if (child instanceof protoc.Enum) {
+                this._buildEnum(child);
             }
-            if (field.repeated) {
-                this._builder.add(protoc.Generator._escapeName(type.name) + '.prototype' + fieldName + ' = [];');
-            }
-            else if (field instanceof protoc.MapField) {
-                this._builder.add(protoc.Generator._escapeName(type.name) + '.prototype' + fieldName + ' = {};');
-            }
-            else if (field.type.long) {
-                const unsigned = field.type.name === 'uint64' || field.type.name === 'fixed64';
-                this._builder.add(protoc.Generator._escapeName(type.name) + '.prototype' + fieldName + ' = $protobuf.Long ? $protobuf.Long.fromBits(' + JSON.stringify(field.defaultValue.low) + ', ' + JSON.stringify(field.defaultValue.high) + ', ' + JSON.stringify(field.defaultValue.unsigned) + ') : ' + field.defaultValue.toNumber(unsigned) + ';');
-            }
-            else if (field.type.name === 'bytes') {
-                this._builder.add(protoc.Generator._escapeName(type.name) + '.prototype' + fieldName + ' = new Uint8Array(' + JSON.stringify(Array.prototype.slice.call(field.defaultValue)) + ");");
+            else if (child instanceof protoc.Type) {
+                this._buildType(child);
             }
             else {
-                this._builder.add(protoc.Generator._escapeName(type.name) + '.prototype' + fieldName + ' = ' + JSON.stringify(field.defaultValue) + ';');
+                this._buildNamespace(child);
             }
         }
+    }
+
+    _buildNamespace(namespace) {
+        const name = namespace.fullName.split('.').map((name) => protoc.Generator._escapeName(name)).join('.');
+        this._builder.add(name + ' = {};');
+        this._buildContent(namespace);
+    }
+
+    _buildEnum(type) {
+        /* eslint-disable indent */
+        const name = type.fullName.split('.').map((name) => protoc.Generator._escapeName(name)).join('.');
+        this._builder.add(name + ' = {');
+        this._builder.indent();
+            const keys = Object.keys(type.values);
+            for (let i = 0; i < keys.length; i++) {
+                const key = keys[i];
+                const value = type.values[key];
+                this._builder.add(JSON.stringify(key) + ': ' + value + ((i === keys.length - 1) ? '' : ','));
+            }
+        this._builder.outdent();
+        this._builder.add("};");
+        /* eslint-enable indent */
+    }
+
+    _buildType(type) {
+
+        const name = type.fullName.split('.').map((name) => protoc.Generator._escapeName(name)).join('.');
+        this._builder.add(name + ' = class ' + protoc.Generator._escapeName(type.name) + ' {');
+        this._builder.add('');
+        this._builder.indent();
+
+        this._buildConstructor(type);
 
         for (const oneof of type.oneofs.values()) {
             /* eslint-disable indent */
             this._builder.add('');
-            this._builder.add('const ' + oneof.name + 'Set = new Set([ ' + Array.from(oneof.oneof.keys()).map(JSON.stringify).join(', ') + ']);');
-            this._builder.add('Object.defineProperty(' + protoc.Generator._escapeName(type.name) + '.prototype, ' + JSON.stringify(oneof.name) +', {');
+            this._builder.add('get ' + oneof.name + '() {');
             this._builder.indent();
-                this._builder.add('get: function() { return Object.keys(this).find((key) => ' + oneof.name + 'Set.has(key) && this[key] != null); }');
+                this._builder.add(name + '.' + oneof.name + 'Set = ' + name + '.' + oneof.name + 'Set || new Set([ ' + Array.from(oneof.oneof.keys()).map(JSON.stringify).join(', ') + ']);');
+                this._builder.add('return Object.keys(this).find((key) => ' + name + '.' + oneof.name + 'Set.has(key) && this[key] != null);');
             this._builder.outdent();
-            this._builder.add('});');
+            this._builder.add('}');
             /* eslint-enable indent */
         }
 
@@ -1228,11 +1203,37 @@ protoc.Generator = class {
             this._builder.add('');
             this._buildDecodeTextFunction(type);
         }
+
+        this._builder.outdent();
+        this._builder.add('};');
+
+        let first = true;
+        for (const field of type.fields.values()) {
+            if (field.partOf || field.repeated || field instanceof protoc.MapField) {
+                continue;
+            }
+            if (first) {
+                this._builder.add('');
+                first = false;
+            }
+            if (field.type.long) {
+                const unsigned = field.type.name === 'uint64' || field.type.name === 'fixed64';
+                this._builder.add(name + '.prototype' + protoc.Generator._propertyReference(field.name) + ' = protobuf.Long ? protobuf.Long.fromBits(' + JSON.stringify(field.defaultValue.low) + ', ' + JSON.stringify(field.defaultValue.high) + ', ' + JSON.stringify(field.defaultValue.unsigned) + ') : ' + field.defaultValue.toNumber(unsigned) + ';');
+            }
+            else if (field.type.name === 'bytes') {
+                this._builder.add(name + '.prototype' + protoc.Generator._propertyReference(field.name) + ' = new Uint8Array(' + JSON.stringify(Array.prototype.slice.call(field.defaultValue)) + ");");
+            }
+            else {
+                this._builder.add(name + '.prototype' + protoc.Generator._propertyReference(field.name) + ' = ' + JSON.stringify(field.defaultValue) + ';');
+            }
+        }
+
+        this._buildContent(type);
     }
 
     _buildConstructor(type) {
         /* eslint-disable indent */
-        this._builder.add('function ' + type.name + '() {');
+        this._builder.add('constructor() {');
         this._builder.indent();
             for (const field of type.fields.values()) {
                 if (field instanceof protoc.MapField) {
@@ -1247,27 +1248,10 @@ protoc.Generator = class {
         /* eslint-enable indent */
     }
 
-    _buildEnum(namespace, type) {
-        /* eslint-disable indent */
-        this._builder.add('');
-        this._builder.add(protoc.Generator._escapeName(namespace) + '.' + protoc.Generator._escapeName(type.name) + ' = (function() {');
-        this._builder.indent();
-            this._builder.add("const values = {};");
-            for (const key of Object.keys(type.values)) {
-                const valueId = type.values[key];
-                const val = valueId;
-                this._builder.add('values[' + JSON.stringify(key) + '] = ' + val + ';');
-            }
-            this._builder.add("return values;");
-        this._builder.outdent();
-        this._builder.add("})();");
-        /* eslint-enable indent */
-    }
-
     _buildDecodeFunction(type) {
         /* eslint-disable indent */
         const fieldTypeName = (field) => "$root" + field.type.fullName;
-        this._builder.add(protoc.Generator._escapeName(type.name) + '.decode = function (reader, length) {');
+        this._builder.add('static decode(reader, length) {');
         this._builder.indent();
             this._builder.add('const message = new $root' + type.fullName + '();');
             this._builder.add('const end = reader.next(length);');
@@ -1290,7 +1274,7 @@ protoc.Generator = class {
                                 const value = field.type instanceof protoc.PrimitiveType ?
                                     'reader.' + field.type.name + '()' :
                                     fieldTypeName(field) + '.decode(reader, reader.uint32())';
-                                this._builder.add('reader.pair(' + variable + ', () => reader.' + field.keyType + '(), () => ' + value + ');');
+                                this._builder.add('reader.pair(' + variable + ', () => reader.' + field.keyType.name + '(), () => ' + value + ');');
                             }
                             else if (field.repeated) {
                                 if (field.type.name === 'float' || field.type.name === 'double') {
@@ -1345,21 +1329,21 @@ protoc.Generator = class {
             for (const field of Array.from(type.fields.values()).filter((field) => field.required)) {
                 this._builder.add("if (!Object.prototype.hasOwnProperty.call(message, '" + field.name + "')) {");
                 this._builder.indent();
-                    this._builder.add('throw $protobuf.Error("Excepted \'' + field.name + '\'.");');
+                    this._builder.add('throw new protobuf.Error("Excepted \'' + field.name + '\'.");');
                 this._builder.outdent();
                 this._builder.add('}');
             }
 
             this._builder.add('return message;');
         this._builder.outdent();
-        this._builder.add('};');
+        this._builder.add('}');
         /* eslint-enable indent */
     }
 
     _buildDecodeTextFunction(type) {
         /* eslint-disable indent */
         const fieldTypeName = (field) => "$root" + field.type.fullName;
-        this._builder.add(protoc.Generator._escapeName(type.name) + '.decodeText = function (reader) {');
+        this._builder.add('static decodeText(reader) {');
         this._builder.indent();
             this._builder.add('const message = new $root' + type.fullName + '();');
             this._builder.add('reader.start();');
@@ -1383,14 +1367,14 @@ protoc.Generator = class {
                                 const value = field.type instanceof protoc.PrimitiveType ?
                                     'reader.' + field.type.name + '()' :
                                     fieldTypeName(field) + '.decodeText(reader, true)';
-                                this._builder.add('reader.pair(' + variable + ', () => reader.' + field.keyType + '(), () => ' + value + ');');
+                                this._builder.add('reader.pair(' + variable + ', () => reader.' + field.keyType.text + '(), () => ' + value + ');');
                             }
                             else if (field.repeated) { // Repeated fields
                                 if (field.type instanceof protoc.Enum) {
                                     this._builder.add('reader.array(' + variable + ', () => reader.enum(' + fieldTypeName(field) + '));');
                                 }
                                 else if (field.type instanceof protoc.PrimitiveType) {
-                                    this._builder.add('reader.array(' + variable + ', () => reader.' + field.type.name + '());');
+                                    this._builder.add('reader.array(' + variable + ', () => reader.' + field.type.text + '());');
                                 }
                                 else {
                                     this._builder.add(variable + '.push(' + fieldTypeName(field) + '.decodeText(reader, true));');
@@ -1401,7 +1385,7 @@ protoc.Generator = class {
                                 this._builder.add(variable + ' = reader.enum(' + fieldTypeName(field) + ');');
                             }
                             else if (field.type instanceof protoc.PrimitiveType) {
-                                this._builder.add(variable + ' = reader.' + field.type.name + '();');
+                                this._builder.add(variable + ' = reader.' + field.type.text + '();');
                             }
                             else {
                                 this._builder.add(variable + ' = ' + fieldTypeName(field) + '.decodeText(reader, true);');
@@ -1422,12 +1406,12 @@ protoc.Generator = class {
             for (const field of Array.from(type.fields.values()).filter((field) => field.required)) {
                 this._builder.add('if (!Object.prototype.hasOwnProperty.call(message, "' + field.name + '"))');
                 this._builder.indent();
-                    this._builder.add('throw $protobuf.Error("Excepted \'' + field.name + '\'.");');
+                    this._builder.add('throw new protobuf.Error("Excepted \'' + field.name + '\'.");');
                 this._builder.outdent();
            }
             this._builder.add('return message;');
         this._builder.outdent();
-        this._builder.add('};');
+        this._builder.add('}');
         /* eslint-enable indent */
     }
 
@@ -1436,7 +1420,7 @@ protoc.Generator = class {
     }
 
     static _escapeName(name) {
-        return !name ? "$root" : protoc.Generator._isKeyword(name) ? name + "_" : name;
+        return !name ? '$root' : protoc.Generator._isKeyword(name) ? name + '_' : name;
     }
 
     static _propertyReference(name) {
@@ -1492,48 +1476,42 @@ protoc.Error = class extends Error {
 
 const main = (args) => {
 
-    let verbose = false;
-    let root = 'default';
-    let out = '';
-    let text = false;
-    const paths = [];
-    const files = [];
-
+    const options = { verbose: false, root: 'default', out: '', text: false, paths: [], files: [] };
     while (args.length > 0) {
         const arg = args.shift();
         switch (arg) {
             case '--verbose':
-                verbose = true;
+                options.verbose = true;
                 break;
             case '--out':
-                out = args.shift();
+                options.out = args.shift();
                 break;
             case '--root':
-                root = args.shift();
+                options.root = args.shift();
                 break;
             case '--text':
-                text = true;
+                options.text = true;
                 break;
             case '--path':
-                paths.push(args.shift());
+                options.paths.push(args.shift());
                 break;
             default:
                 if (arg.startsWith('-')) {
                     throw new protoc.Error("Invalid command line argument '" + arg + "'.");
                 }
-                files.push(arg);
+                options.files.push(arg);
                 break;
         }
     }
 
     try {
-        const content = new protoc.Generator(new protoc.Root(root, paths, files), text).content;
-        if (out) {
-            fs.writeFileSync(out, content, 'utf-8');
+        const content = new protoc.Generator(new protoc.Root(options.root, options.paths, options.files), options.text).content;
+        if (options.out) {
+            fs.writeFileSync(options.out, content, 'utf-8');
         }
     }
     catch (err) {
-        if (err instanceof protoc.Error && !verbose) {
+        if (err instanceof protoc.Error && !options.verbose) {
             process.stderr.write(err.message + '\n');
         }
         else {

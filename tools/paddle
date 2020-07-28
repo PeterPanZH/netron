@@ -4,7 +4,7 @@ set -e
 pushd $(cd $(dirname ${0})/..; pwd) > /dev/null
 
 bold() {
-    echo "$(tty -s && tput bold)$1$(tty -s && tput sgr0)"
+    echo "$(tty -s && tput bold)$1$(tty -s && tput sgr0)" 
 }
 
 clean() {
