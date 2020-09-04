@@ -92,6 +92,7 @@ paddle.Graph = class {
         this._nodes = [];
         this._inputs = [];
         this._outputs = [];
+        this._name = `blocks[${block.idx}]`;
 
         const args = new Map();
         for (const variable of block.vars) {
@@ -168,6 +169,10 @@ paddle.Graph = class {
                 }
             }
         }
+    }
+
+    get name() {
+        return this._name;
     }
 
     get inputs() {
